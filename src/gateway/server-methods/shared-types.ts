@@ -58,6 +58,7 @@ import type {
   WorkerEnvironmentServiceContract,
   WorkerPlacementDispatchContract,
 } from "../worker-environments/service-contract.js";
+import type { TrustedSessionCreation } from "./session-creation-provenance.js";
 
 /**
  * Shared gateway request types used by every server-method module.
@@ -85,6 +86,10 @@ export type GatewayClient = {
   pluginNodeCapabilities?: Record<string, { capability: string; expiresAtMs: number }>;
   isDeviceTokenAuth?: boolean;
   internal?: {
+    /** Marks the server-constructed client used by trusted in-process dispatch. */
+    syntheticClient?: true;
+    /** Trusted session creation provenance; never accepted from Gateway wire params. */
+    sessionCreation?: TrustedSessionCreation;
     allowModelOverride?: boolean;
     approvalRuntime?: boolean;
     cronRunContinuation?: boolean;

@@ -533,7 +533,7 @@ export async function applySystemAgentSetup(
                 ...finalizedConfig,
                 agents: {
                   ...finalizedConfig.agents,
-                  list: currentConfig.agents?.list,
+                  list: currentConfig.agents?.list ?? [],
                 },
               }
             : finalizedConfig;

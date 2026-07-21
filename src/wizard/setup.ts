@@ -174,9 +174,7 @@ async function runSetupWizardOnce(
       : {}
     : {};
   baseConfig = await requireRiskAcknowledgement({ opts, prompter, config: baseConfig });
-  // Ordinary onboard reruns must preserve existing agents.list / bindings. Only
-  // explicit reset or import flows are allowed to shrink the config — see issue
-  // openclaw#84692.
+  // Ordinary reruns preserve agents.list/bindings; only reset or import may shrink them (#84692).
   let pendingPluginInstallMigrationBaseConfig: OpenClawConfig | undefined = baseConfig;
   const writeSetupConfigFile = async (
     config: OpenClawConfig,
@@ -716,7 +714,6 @@ async function runSetupWizardOnce(
       workspaceDir,
     });
   }
-
   if (!opts.skipHooks) {
     const { enableDefaultOnboardingInternalHooks } = await import("../commands/onboard-hooks.js");
     nextConfig = enableDefaultOnboardingInternalHooks(nextConfig);
@@ -724,9 +721,9 @@ async function runSetupWizardOnce(
 
   nextConfig = onboardHelpers.applyWizardMetadata(nextConfig, { command: "onboard", mode });
   nextConfig = await persistSetupCandidate(nextConfig, true);
-  const { logConfigUpdated } = await loadConfigLoggingModule();
-  logConfigUpdated(runtime);
+  (await loadConfigLoggingModule()).logConfigUpdated(runtime);
   await onboardHelpers.ensureWorkspaceAndSessions(workspaceDir, runtime, {
+    ...(agentStage.firstAgent ? { agentId: agentStage.firstAgent.entry.id } : {}),
     skipBootstrap: Boolean(nextConfig.agents?.defaults?.skipBootstrap),
     skipOptionalBootstrapFiles: nextConfig.agents?.defaults?.skipOptionalBootstrapFiles,
   });

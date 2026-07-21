@@ -18,7 +18,7 @@ import { resolveUserPath } from "../utils.js";
 import { t } from "./i18n/index.js";
 import { runWizardWithPromptNavigation } from "./navigation-prompter.js";
 import type { WizardPrompter } from "./prompts.js";
-import { ensureSetupWizardAgent } from "./setup.agent.js";
+import { persistSetupAgentStage, stageSetupWizardAgent } from "./setup.agent.js";
 import {
   detectSetupMigrationSources,
   listSetupMigrationOptions,
@@ -570,7 +570,7 @@ async function runSetupWizardOnce(
     requestedWorkspaceDir,
     prompter,
   });
-  let nextConfig = await ensureSetupWizardAgent({
+  const agentStage = await stageSetupWizardAgent({
     config: baseConfig,
     prompter,
     workspaceDir,
@@ -578,6 +578,15 @@ async function runSetupWizardOnce(
     allowWorkspaceChange,
     skipBootstrap: opts.skipBootstrap,
   });
+  let nextConfig = agentStage.config;
+  const persistSetupCandidate = async (config: OpenClawConfig, commit = false) =>
+    await persistSetupAgentStage({
+      baseConfig,
+      commit,
+      config,
+      stage: agentStage,
+      writeConfig: writeSetupConfigFile,
+    });
 
   if (!keepExistingModelConfig) {
     const modelAuth = await runSetupModelAuthStep({
@@ -608,9 +617,7 @@ async function runSetupWizardOnce(
   // Persist auth + gateway decisions now: channel/search/skills steps can pair
   // devices or install plugins, and a crash or cancel there must not force the
   // user to redo provider setup from scratch.
-  nextConfig = await writeSetupConfigFile(nextConfig, {
-    allowConfigSizeDrop: false,
-  });
+  nextConfig = await persistSetupCandidate(nextConfig);
 
   let liveModelVerified = false;
   // keepExistingModelConfig is latched before auth setup, so this distinguishes
@@ -626,8 +633,7 @@ async function runSetupWizardOnce(
       prompter,
       runtime,
       workspaceDir,
-      writeConfig: async (config) =>
-        await writeSetupConfigFile(config, { allowConfigSizeDrop: false }),
+      writeConfig: persistSetupCandidate,
       required: usedImportFlow && keepExistingModelConfig,
     });
     nextConfig = verification.config;
@@ -658,17 +664,9 @@ async function runSetupWizardOnce(
     });
   }
 
-  nextConfig = await writeSetupConfigFile(nextConfig, {
-    allowConfigSizeDrop: false,
-  });
-  const { logConfigUpdated } = await loadConfigLoggingModule();
-  logConfigUpdated(runtime);
-  await onboardHelpers.ensureWorkspaceAndSessions(workspaceDir, runtime, {
-    skipBootstrap: Boolean(nextConfig.agents?.defaults?.skipBootstrap),
-    skipOptionalBootstrapFiles: nextConfig.agents?.defaults?.skipOptionalBootstrapFiles,
-  });
+  nextConfig = await persistSetupCandidate(nextConfig);
 
-  if (!usedImportFlow) {
+  if (!usedImportFlow && !agentStage.firstAgent) {
     const { runSetupMemoryImportStep } = await import("./setup.memory-import.js");
     await runSetupMemoryImportStep({ config: nextConfig, prompter, runtime });
   }
@@ -725,9 +723,17 @@ async function runSetupWizardOnce(
   }
 
   nextConfig = onboardHelpers.applyWizardMetadata(nextConfig, { command: "onboard", mode });
-  nextConfig = await writeSetupConfigFile(nextConfig, {
-    allowConfigSizeDrop: false,
+  nextConfig = await persistSetupCandidate(nextConfig, true);
+  const { logConfigUpdated } = await loadConfigLoggingModule();
+  logConfigUpdated(runtime);
+  await onboardHelpers.ensureWorkspaceAndSessions(workspaceDir, runtime, {
+    skipBootstrap: Boolean(nextConfig.agents?.defaults?.skipBootstrap),
+    skipOptionalBootstrapFiles: nextConfig.agents?.defaults?.skipOptionalBootstrapFiles,
   });
+  if (!usedImportFlow && agentStage.firstAgent) {
+    const { runSetupMemoryImportStep } = await import("./setup.memory-import.js");
+    await runSetupMemoryImportStep({ config: nextConfig, prompter, runtime });
+  }
   commitAppRecommendationResult?.();
 
   const { finalizeSetupWizard } = await import("./setup.finalize.js");

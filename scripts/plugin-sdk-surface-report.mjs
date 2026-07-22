@@ -138,7 +138,8 @@ export function readPluginSdkSurfaceBudgets(env = process.env) {
     publicEntrypoints: readPluginSdkSurfaceBudgetEnv(
       "OPENCLAW_PLUGIN_SDK_MAX_PUBLIC_ENTRYPOINTS",
       // +1: session-discussion binds one external discussion provider to sessions.
-      140,
+      // +1: number-runtime is shared by official external plugin packages.
+      141,
       env,
     ),
     publicExports: readPluginSdkSurfaceBudgetEnv(
@@ -146,7 +147,8 @@ export function readPluginSdkSurfaceBudgets(env = process.env) {
       // +4: session discussion state, info, provider, and registration contracts.
       // +2: structured media placeholder formatter and its text-fact contract.
       // +2: narrow settled-turn finalization result and safe full-attempt projector.
-      4723,
+      // +33: public numeric coercion, timer bound, and timestamp helpers.
+      4756,
       env,
     ),
     publicFunctionExports: readPluginSdkSurfaceBudgetEnv(
@@ -154,7 +156,8 @@ export function readPluginSdkSurfaceBudgets(env = process.env) {
       // +1: session discussion provider registration.
       // +1: structured media placeholder formatter for text-only channel carriers.
       // +1: settled-turn full-attempt projector.
-      2881,
+      // +29: public numeric coercion, timer bound, and timestamp helpers.
+      2910,
       env,
     ),
     publicDeprecatedExports: readPluginSdkSurfaceBudgetEnv(

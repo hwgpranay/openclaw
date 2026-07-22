@@ -196,7 +196,7 @@ export function renderRecentSession(params: {
         @click=${(event: MouseEvent) => cb.rc(event, session)}
       >
         <span class="sidebar-session-indicator">${leadingIndicator}</span>${renderSessionOwnerChip(
-          data.w ? session.createdBy : undefined,
+          data.w ? session.createdActor : undefined,
           "row",
         )}
         <span class="sidebar-recent-session__text">

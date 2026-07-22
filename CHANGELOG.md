@@ -6,4192 +6,1091 @@ Docs: https://docs.openclaw.ai
 
 ### Highlights
 
-- **Remote coding sessions:** run Control UI sessions on cloud workers, open Codex and Claude catalog sessions in terminals on their owning hosts, and resume OpenCode and Pi sessions directly in a terminal. (#107670, #107086, #107200)
-- **Native automation and nodes:** bring Automations parity to mobile, add foreground Voice Wake on Android, and expose camera, location, and notification capabilities from headless Linux nodes. (#106355, #107081, #107193)
-- **Safer channel operation:** prevent Telegram durable-ingress loss after restarts, keep Signal stop and approval controls responsive during active turns, and stop channel allowlists from granting owner access. (#107288, #107422, #107403) Thanks @obviyus, @arduano, and @yetval.
-- **Guided Control UI setup:** configure model providers from Settings, onboard channels through a guided setup page, and choose images and models while creating sessions. (#106490, #106469, #107358) Thanks @alexandre-leng and @fuller-stack-dev.
-- **Gateway and session recovery:** prevent restart admission from wedging the Gateway, recover reply sessions after finalization stalls, and keep one-shot cron jobs enabled through lifecycle claim races. (#107339, #106792, #107236) Thanks @obviyus, @joshavant, @charliemeyer2000, and @SL4N.
-- **Install and packaging:** add Linux deb and AppImage bundles with Gateway guidance, publish them from stable main-based releases, and let Windows installs continue immediately after winget adds Node.js. (#106533, #106891, #106862)
+- **Session observer:** add a visibility-aware observer HUD, digest timeline card, native session-list digests, and follow-up questions that let operators understand active work without interrupting it. (#112594, #112565, #112448, #112216, #112597)
+- **Offline and branched chat:** make queued outbox state visible across the composer and session list, unify offline feedback, and add branch-safe rewind, fork, and session switching on mobile and native apps. (#112649, #112600, #112284, #112056, #112163) Thanks @vincentkoc.
+- **Cross-platform computer use:** add capability-based `computer.act` routing, an experimental Windows/Linux fulfiller, Android AccessibilityService execution, mobile node commands, and the `mobile_ui` agent tool. (#112267, #112255, #112241, #112232, #112107)
+- **Multi-Gateway native apps:** connect multiple Gateways at once, manage saved Gateway profiles and windows on macOS, surface existing direct Gateways, and protect direct connections with TLS pins. (#111986, #111932, #112629, #112353) Related #111973, #111931, #112347.
+- **Dashboard and Workboard widgets:** add plugin-declared data bindings and actions, native Workboard cards, routable/pinnable boards, pinned chat presentations, shared widget framing, and all-board mini views. (#112434, #112302, #112083, #112076, #111989, #111977, #112484)
+- **Turn and reply continuity:** resume interrupted turns after Gateway restarts, restore assistant context, keep replies alive through config reloads and concurrent chat creation, and preserve Codex-bound history across session rotation. (#112562, #112548, #112467, #112026, #112016) Related #112520 Thanks @fuller-stack-dev.
 
 ### Changes
 
-- **Control UI cloud workspace conflicts:** surface staged-ref guidance, bounded conflicted paths, structured transcript events, and sidebar attention for cloud worker results that kept local versions.
-- **Control UI update recovery:** the "A new version is available" Reload button now waits out the gateway restart that stranded the chunk and reloads as soon as it answers, instead of silently doing nothing and leaving a manual hard reload as the only way out.
-- **Control UI sender identity polish:** attributed user messages show the author's real avatar in an always-visible gutter on identity-resolving gateways, sender labels drop the opaque profile-UUID suffix (new and historical transcripts), and profile-id senders resolve avatars through the canonical gateway route.
-- **Control UI who's-online roster:** click the sidebar footer facepile to open a scrollable roster of everyone online, showing each person's avatar, name, and email with your own entry pinned first.
-- **Discord and Slack native login:** register `/login` in native command menus while keeping pairing-code issuance limited to private chats and the Web UI.
-- **Control UI user profiles:** let trusted-proxy users manage their own display name and avatar, resolve attributed chat and presence identities through uploaded avatars or a private cached Gravatar proxy, and keep other users' profiles admin-only.
-- **Trusted-proxy browser pairing:** optionally auto-approve new Control UI and WebChat devices from allowlisted proxy identities with non-admin scope caps, while keeping existing-device upgrades manual.
-- **Channel plugin ingress monitors:** add a shared plugin SDK monitor for durable admission, polling, pruning, claim identity validation, adoption handoff, and shutdown, and migrate IRC, Synology Chat, and Google Chat to the shared lifecycle.
-- **Dashboard MCP apps:** pin originating-session MCP app views as living dashboard widgets, renew their sandboxed view leases, and keep tool interactivity behind revision-bound grants with graceful stale-state recovery.
-- **External gateway supervision:** add `OPENCLAW_SUPERVISOR_MODE=external` for lifecycle owners such as OCM, preserving verified restart and deferral behavior without exposing native service authority, blocking native service mutation and self-update, and providing a versioned atomic restart-handoff consume contract. Thanks @shakkernerd.
-- **ClickClack guided setup:** configure ClickClack from `openclaw onboard` or `openclaw channels add clickclack` with URL, token, and workspace prompts, default-account env fallback, nonfatal live connection validation, and gateway-aware next steps that connect automatically when OpenClaw is already running. Thanks @shakkernerd.
-- **ClickClack command menus:** publish each bot's native OpenClaw commands to ClickClack composer autocomplete at gateway startup, with per-account opt-out and nonfatal compatibility handling for older tokens and servers. Thanks @shakkernerd and @vincentkoc.
-- **Skill Workshop approvals:** run agent-initiated apply, reject, and quarantine actions without an additional approval prompt by default while preserving `skills.workshop.approvalPolicy: "pending"` as an opt-in approval gate. Thanks @shakkernerd.
-- **TUI fuzzy selectors:** delegate list matching to pi-tui, adding slash-token and alpha-number matching while removing the local matcher fork.
-- **macOS paired-node terminals:** advertise duplex Codex and Claude terminal resume commands from the embedded node host and forward interactive input and cancellation through the native app bridge. (#107335)
-- **Control UI catalog terminals:** open eligible Codex and Claude Code sessions in the native CLI on their Gateway or paired-node host, with viewer-versus-terminal preferences, validated resume commands, and an interactive PTY relay. (#107086) Thanks @vincentkoc.
-- **Skill Workshop history review:** add a manual, newest-first session scan that progressively searches older substantial work for conservative skill ideas, stores only SQLite cursor metadata, and leaves up to three results as pending proposals even when autonomous self-learning is disabled. (#106182)
-- **OpenAI GPT-5.6 defaults:** use `openai/gpt-5.6` (Sol alias) for fresh API-key setup and exact `openai/gpt-5.6-sol` for fresh Codex/OAuth setup, default Sol to medium reasoning across both runtimes, and preserve existing primaries, fallbacks, aliases, and explicit GPT-5.5 selections. (#103234)
-- **iOS offline chat:** pre-paint recent sessions and canonical transcripts from a protected, bounded per-gateway cache, keep sending disabled offline, and purge cached conversation text when pairing is reset. (#100194)
-- **Slack progress indicators:** use Slack's native assistant thread status and rotating loading messages by default while keeping acknowledgement reactions static; lifecycle reaction updates now require `messages.statusReactions.enabled: true`.
-- **Control UI Talk controls:** keep voice, model, sensitivity, and other realtime defaults in Settings → Communications → Talk, and use the composer microphone caret to select any browser audio input. (#101046)
-- **Control UI session workspace shortcut:** expand or collapse the active Chat pane's session workspace rail with ⇧⌘B without changing the main app sidebar or the separate detail and Canvas preview panel. Thanks @shakkernerd.
-- **Control UI Settings shortcut:** open Settings with ⇧⌘, while leaving the browser-owned ⌘, shortcut unchanged. Thanks @shakkernerd.
-- **Control UI chat layout:** center the transcript on the composer axis, keep assistant and tool output left and user bubbles right within the same readable frame, and preserve custom message-width overrides. (#104474) Thanks @shakkernerd, @vincentkoc, and @zw-xysk.
-- **Control UI composer footer:** center the chat settings chip and model controls between the divider and the card edge instead of pinning them to the divider. (#105866)
-- **Control UI assistant actions:** keep assistant name and time first while placing hover actions beside them on the left instead of at the far edge. Thanks @shakkernerd.
-- **Control UI message context:** reveal per-message token, context, and model details from the timestamp on hover or activation instead of showing a separate Context button.
-- **Control UI session titles:** reveal truncated recent-session names with a reduced-motion-safe hover animation.
-- **Control UI sidebar usage:** remove the provider usage quota row from the expanded sidebar while keeping usage details available in the chat composer and Usage page. Thanks @shakkernerd and @vincentkoc.
-- **Workboard dispatch cap:** add a request-scoped `--max-starts` override while preserving the default cap, sequential starts, and one-card-per-owner guard. (#100174) Thanks @souvikDevloper, @Souvikalp, and @jwest75674.
-- **Plugin install provenance warnings:** require explicit `--force` acknowledgement for arbitrary executable plugin sources in CLI and chat installs, keep trusted ClawHub, bundled, official-catalog, and tracked-update flows frictionless, and restrict Crestodian installs to trusted sources. (#102197) Thanks @jesse-merhi.
-- **Cloud workers:** add session placement, dispatch, and worker-turn routing for remote session execution. (#106332)
-- **Paired-node coding agents:** discover OpenCode and Pi sessions and continue Codex and Claude catalog sessions through streaming CLI agent runs. (#106941, #106927, #105833)
-- **Catalog sessions:** create eligible catalog sessions directly from the Control UI sidebar. (#105810) Thanks @fuller-stack-dev.
-- **Managed worktrees:** configure cleanup limits by count and total size from Settings. (#106224)
-- **Cron history:** serve scheduled-run history from the task ledger. (#106392)
-- **Coding-agent memory:** import Codex and Claude Code memory into the Control UI. (#106406)
-- **MCP isolation:** scope MCP server connections to their requesting session. (#106359) Thanks @obviyus.
-- **Discord voice:** notify agents when voice-channel participants change. (#107004)
-- **Codex usage:** show the signed-in account email alongside app-server usage windows. (#106500)
-- **Skill Workshop:** scan prior session history for conservative, reviewable skill ideas. (#106766)
-- **Task previews:** show the latest tasks from the running-tasks status row. (#107297)
-- **Session changes:** show the active branch and local changed-file state in Control UI sessions. (#106835)
-- **Channel progress:** reserve progress drafts for long-running work and use the model's own preamble as the status headline. (#106026)
-- **Codex CLI:** bump the bundled plugin to Codex CLI 0.144.6 and align GPT-5.6 Codex context metadata with the upstream 272k limit.
+- **Archived sessions:** add first-class archived-session filtering, inline archived state, and pruning exemptions so archived work remains available without cluttering active views. (#112554)
+- **Settings tiers:** separate common and advanced configuration with a Control UI filter that keeps routine setup approachable. (#112538)
+- **Live model catalogs:** discover models from provider catalogs during setup instead of relying only on static lists. (#112412) Related #112405 Thanks @fuller-stack-dev.
+- **Channel pairing management:** review and resolve DM pairing requests directly from the Control UI Channels page. (#112401) Related #112399.
+- **iOS settings chat:** add a dedicated OpenClaw settings conversation on iOS. (#112420)
+- **Working claw states:** bring zen, drummer, peekaboo, wait phrases, turn recaps, and calmer working-state feedback across Control UI, Android, iOS, and macOS. (#112571, #112570, #112552, #112221, #112188, #112060)
+- **Agent-scoped provider credentials:** manage model-provider credentials per agent from Gateway and Control UI surfaces. (#111796)
+- **Cron source identity:** stream schedule sources with durable source identity and show script automations consistently across clients. (#112387, #112195)
+- **User identity and avatars:** add per-user chat bubble colors, photo-plus-initial presence fallbacks, avatar-aware agent pickers, and self-service profile avatars. (#112070, #112523, #112488, #111421) Related #112068 Thanks @fuller-stack-dev.
+- **Accessible image inspection:** open chat images in a keyboard- and screen-reader-friendly lightbox. (#112442) Related #112425.
+- **Ordered media context:** carry ordered media facts through prompt assembly so multimodal turns preserve attachment order. (#112601)
 
 ### Fixes
 
-- **ClickClack split-origin setup codes:** consume versioned exact claim endpoints without appending a second claim path, validate the returned canonical API base, preserve private API transport overrides, and keep legacy setup URLs working. Fixes #111919. Thanks @shakkernerd.
-- **Standalone plugin files:** let manifestless files explicitly listed in `plugins.load.paths` pass config validation and load independently when several files share a directory.
-- **Control UI terminal error messages:** preserve message-only assistant output beginning with `Error:` or a warning marker instead of treating text prefixes as synthetic failures. Thanks @shakkernerd.
-- **Channel outbound echo suppression:** drop recently emitted platform message and source identities at shared inbound admission and migrate Discord thread unbinds off channel-local expiry state, preventing delayed webhook copies from re-entering agents.
-- **Signal shutdown delivery:** finish dispatching accepted durable-ingress messages before stopping the monitor so Gateway shutdown cannot abandon an in-flight reply.
-- **Reef startup reconciliation:** contain retryable relay failures during startup without supervisor restart loops, while preserving definitive-error and cancellation handling. Thanks @Yigtwxx.
-- **Codex stale-session replies:** stop model fallback after another gateway supersedes a Codex session generation and deliver a safe retry notice instead of abandoning the message silently.
-- **Bounded input and provider responses:** cap pasted auth/config input and enforce wall-clock deadlines across generated-media downloads, polling JSON, and failed response details so oversized or slow-drip streams cannot exceed resource budgets (thanks @Pick-cat).
-- **LINE durable inbound media:** retry transient content preparation, network, and response-stream failures through durable ingress so media-only messages are not acknowledged before their attachment is saved. (#110921) Thanks @edenfunf.
-- **Cloud worker derived workspace caches:** exclude Python caches, dependency trees, and macOS metadata symmetrically from outbound sync and inbound reconciliation so local cache rewrites cannot fence later cloud results or worker reclaim.
-- **Codex model status diagnostics:** report a configured Codex route as unavailable when its harness plugin is disabled, missing, or quarantined, while preserving the separate credential result and making `models status --check` fail instead of silently treating fallback execution as healthy. Thanks @shakkernerd.
-- **Gateway control-plane rate limiting:** use per-method buckets with a 30-per-minute budget so interactive admin writes remain responsive while retaining runaway-loop protection.
-- **Signal shutdown delivery:** drain already-accepted ingress before stopping the monitor so messages received immediately before shutdown finish processing instead of being dropped.
-- **External supervisor restart health:** accept device-identity policy closes only when the replacement gateway lock and listener PID agree, preventing OCM-managed restarts from timing out after a successful handoff. Thanks @shakkernerd.
-- **ACPX cleanup process inspection:** bound host process-table reads so stalled `ps` calls cannot hang gateway startup or session cleanup while retaining fail-closed ownership checks. Thanks @Alix-007.
-- **Cron lifecycle conflict retries:** preserve execution-phase retry decisions across scheduled, manual, and startup-recovered runs so post-execution claim conflicts cannot replay completed messages or tools. Fixes #108428. Thanks @yetval.
-- **Discord gateway metadata deadline:** carry the existing lookup deadline through DNS and proxy preflight, request headers, and response bodies so stalled gateway startup aborts cleanly. (#104580) Thanks @hugenshen.
-- **Control UI cloud session thinking:** expose reasoning level in the New Session model picker and persist the selected level before cloud dispatch.
-- **iOS fresh-install setup:** atomically redact spent setup credentials before Keychain cleanup so a deferred item deletion no longer disconnects a successfully paired device. Fixes #107591 Thanks @dagmarjeeves-lab and @vincentkoc.
-- **Tlon SSE connect cleanup:** disarm opening deadlines after failed HTTP responses and rejected stream opens so reconnect attempts cannot leave stale timers behind. (#104585) Thanks @hugenshen.
-- **LINE reply-token media kinds:** honor video and audio metadata on inbound replies, share the canonical media builder with proactive sends, and fail visibly instead of recording empty media-only deliveries. (#106515) Thanks @edenfunf.
-- **Mattermost websocket connection deadlines:** bound opening handshakes so stalled TCP peers cannot hang channel startup indefinitely and reconnect control resumes after timeout. (#105553) Thanks @hugenshen.
-- **Queued TTS retries:** copy local outbound media into queue-owned storage before enqueueing so voice replies survive producer temp cleanup and restart recovery, retain referenced artifacts through retry backoff, and prune unreferenced spool files after one day. Fixes #108501. (#108502) Thanks @masatohoshino.
-- **Feishu app registration deadlines:** bound OAuth device-registration requests to 10 seconds through the guarded fetch boundary so setup cannot hang indefinitely on stalled response headers. (#105549) Thanks @hugenshen.
-- **LINE control-command mentions:** detect authorized slash commands before mention stripping so inline group and direct-message controls preserve the original ingress metadata. (#107230) Thanks @edenfunf.
-- **Feishu document image reads:** bound remote document-image headers and stalled bodies with the selected account timeout, parse document Markdown through the plugin's MDAST pipeline, preserve image/block alignment, and reject failed upload input before creating empty image blocks. Thanks @Alix-007.
-- **ClawHub registry reads:** retry bounded HTTP 500 responses alongside other transient gateway failures so multi-package release scans survive isolated registry errors.
-- **Slack Socket Mode health:** report connected Socket Mode transports as degraded when `auth.test` fails or the configured bot token resolves to a user without `bot_id`, while preserving healthy enterprise-org installs. Thanks @zw-xysk.
-- **Synology Chat response limits:** bound user-list response reads, stop oversized streams immediately, and retain stale cached identities when a NAS exceeds the supported envelope. Thanks @zw-xysk.
-- **Usage date ranges:** exclude legacy transcript rows without timestamps from finite session ranges while preserving them in all-time totals, and rebuild older usage caches before serving the new semantics. Fixes #89709. Thanks @TurboTheTurtle.
-- **LINE group history races:** retain ambient group messages received during an active mention turn for the next turn while consuming the pre-turn snapshot exactly once. (#107367) Thanks @edenfunf.
-- **Mattermost progress command details:** accept the documented `streaming.preview.commandText` and `streaming.progress.commandText` modes in channel config validation and bundled metadata. Thanks @shakkernerd.
-- **1Password authorization handoff:** persist nonce-bound pending approvals in shared plugin state so hook and tool execution across broker instances remain single-use and fail closed.
-- **Control UI chat transcripts:** preserve loaded history across session and pane returns, bound automatic backscroll loading, virtualize long transcripts, retain hidden native run boundaries, and keep prepends, streaming, and responsive layouts from flickering or jumping. Thanks @shakkernerd.
-- **Codex dynamic tool outcomes:** use the shared tool-result failure contract for arbitrary lifecycle metadata, preventing successful Skill Workshop results from being displayed and persisted as failed calls. Fixes #107684. Thanks @shakkernerd.
-- **Codex `/status` context freshness:** consume exact per-response usage from Codex app servers that emit `rawResponse/completed`; when exact usage is unavailable or omitted, keep context unknown instead of reusing cumulative lifetime totals. (#107813) Thanks @wuqxuan.
-- **Codex resumed permissions:** apply stored per-session approval and sandbox overrides to primary resumed harness turns so `/codex permissions` survives later messages and gateway restarts.
-- **Nested resource ignores:** honor slash-free patterns and escaped literal exclamation marks in nested ignore files during skill and resource discovery. Thanks @moguangyu5-design.
-- **Proxy bypass precedence:** honor blank lower-case `no_proxy` values shadowing upper-case `NO_PROXY` consistently with Undici, and reuse the canonical matcher for Telegram fallback selection.
-- **Tokenjuice exec compaction:** avoid retaining raw command output inside compacted middleware metadata, preventing large successful compactions from failing the middleware details-size guard.
-- **Agent git package identities:** strip refs before hosted-repository parsing and reject traversal segments so GitLab branch refs resolve to the canonical managed install path. Thanks @vincentkoc.
-- **Tlon custom S3 uploads:** pass storage endpoints through the AWS SDK's native parser so custom S3-compatible uploads no longer fail before presigning.
-- **Signal active-run controls:** keep authorized stop, status, approval, and queue-read controls responsive during active turns while preserving ordinary and stateful turns in canonical session admission, and cancel every pending group sender lane on stop. (#107422) Thanks @arduano.
-- **Agent auth storage locks:** surface normal release failures while avoiding redundant release attempts after `proper-lockfile` reports a compromised lock.
-- **Paired-node session catalogs:** authorize bundled Anthropic and Codex catalog requests to invoke their read-only node commands from Control UI read flows, restoring remote Claude/Codex rows and terminal resume availability. Fixes #107406 Thanks @vincentkoc.
-- **Sandbox recreate confirmation:** treat Clack cancellation as a decline so Ctrl-C cannot proceed with container removal.
-- **Microsoft Teams HTML text:** decode HTML5 entities consistently in quoted and Graph-fetched messages while preserving literal escaped entity text.
-- **ClawHub plugin API ranges:** delegate each supported comparator to `semver` so tilde, partial-wildcard, and prerelease caret bounds are correct while preserving OpenClaw version normalization and the existing restricted range grammar. (#106877)
-- **Web Readability relative links:** seed parsed documents with the request URL so article links resolve correctly while removing the plugin's duplicate lazy-loader facade. (#106860)
-- **Browser auto-routing:** fall back to the Gateway host when an implicitly selected browser node reports that its control host is unreachable, while preserving explicit node pins and ambiguous action failures.
-- **Discord voice participant context:** maintain the live Gateway voice-state roster and include current channel participants in authorized voice agent turns so agents can answer who is present. Thanks @vincentkoc.
-- **OC Path JSONC insertion:** patch object and array insertions through `jsonc-parser` so comments, trailing commas, and CRLF formatting survive. (#106847)
-- **Windows winget installs:** continue in the current PowerShell session when winget installs Node.js before the machine PATH update becomes visible, avoiding a false `Node.js not found` failure. (#106862)
-- **Control UI realtime Talk feedback:** request browser echo cancellation, noise suppression, and automatic gain control for every microphone transport, and keep PCM capture processors connected through zero-gain sinks so microphone input cannot play locally.
-- **Agent source-reply recovery:** preserve current-chat delivery evidence for message sends executed through Code Mode, preventing successful replies from triggering a redundant retry and misleading delivery-failure diagnostic. Thanks @vincentkoc.
-- **Gateway in-process restarts:** clear stale SIGUSR1 restart state and resume prepared host suspensions before rebuilding runtime admission, preventing restart cooldowns or paused scheduling from leaking into the next lifecycle. Thanks @vincentkoc.
-- **ClickClack durable media delivery:** route media replies through required delivery, reuse owner-scoped upload and message nonces across retries, repair persisted attachment state without rereading source media, fail closed when an older ClickClack server cannot prove an unknown send, and use the selected provider and model's runtime output budget instead of a channel-level token cap. Thanks @jjjhenriksen and @shakkernerd.
-- **Deepgram realtime custom endpoints:** validate Voice Call streaming base URLs with secret-safe errors, preserve explicit `ws://` and `wss://` endpoints, and map HTTP schemes to their matching WebSocket transport for dedicated and self-hosted deployments. (#105334) Thanks @dwc1997, @vincentkoc, and @zw-xysk.
-- **Control UI New Session reconnects:** rediscover agents, nodes, repository branches, and folder-browser state, refresh derived workspaces, gate unvalidated devices, and block ambiguous retries after Gateway client replacement while preserving the typed task and explicit choices. Fixes #106372 Thanks @vincentkoc.
-- **macOS remote node readiness:** take the main-session key from the node hello snapshot instead of opening an operator connection during node admission, preventing remote tunnel recovery from leaving Computer Use and node exec stuck in lifecycle transition.
-- **Claude CLI context budgets:** honor Anthropic model and per-agent `contextTokens` limits by passing the effective limit to Claude Code's native auto-compactor and persisting the same prepared budget in OpenClaw session state. Fixes #80933. (#93198) Thanks @mushuiyu886 and @gorkem2020.
-- **Transcript read failures:** propagate permission and I/O failures from streaming JSONL session reads instead of treating unreadable transcripts as empty. (#106412) Thanks @zenglingbiao.
-- **Restart sentinel diagnostics:** report SQLite read/write and legacy-file cleanup failures while preserving best-effort restart recovery behavior. (#106385) Thanks @zenglingbiao and @wendy-chsy.
-- **Native app connection and relay reliability:** keep Android disconnects stopped across Activity recreation, fail remote camera commands without opening permission prompts, refresh mobile node registration after capability changes, surface iOS onboarding connection failures, cancel stale Talk owners on session switches, reject invalid Watch acknowledgments, preserve Watch events received during startup, and prevent older agent overview requests from replacing newer gateway state. Thanks @vincentkoc.
-- **Gateway source watch:** hand the configured port off from the installed service before starting the tmux watcher, preserve failed panes for attach/capture, and keep explicit alternate-port watches side by side with the managed Gateway. Thanks @vincentkoc.
-- **Claude CLI max-turn diagnostics:** preserve terminal max-turn results with OpenClaw and Claude session context, warn when tool actions may already have run, and stop unsafe auth-profile or model replay for potentially side-effecting turns. (#94130) Thanks @zhangguiping-xydt and @tdrose01.
-- **Provider network retries:** align provider read/poll/download and agent-wait recovery for transient connection errors, retry bounded provider `ENOTFOUND` failures while leaving gateway `ENOTFOUND` and non-idempotent create operations fail-fast. (#101496) Thanks @xialonglee.
-- **Session retry classification:** stop permanent provider errors whose identifiers or payload details merely contain 429/5xx digit sequences from re-sending full context, and share bounded rate-limit-window parsing across retry paths. (#105258) Thanks @destire-mio and @yetval.
-- **LINE directive templates:** suppress confirms and buttons with blank required fields or unlabeled actions while preserving valid titleless buttons and surrounding reply text. (#105520) Thanks @edenfunf.
-- **SQLite maintenance schema validation:** reject current-version global and agent databases with missing or drifted canonical tables, constraints, indexes, triggers, or table options before compaction, while accepting supported additive-migration layouts.
-- **Matrix bootstrap diagnostics:** preserve complete UTF-8 code points in bounded stdout and stderr tails so crypto dependency failures do not show replacement characters at retention boundaries. (#105475) Thanks @qingminlong.
-- **iOS Watch relay commands:** allow paired iPhone nodes to advertise and invoke `watch.status` and `watch.notify` through the default Gateway policy while preserving the direct watchOS node's fixed minimal command surface. Thanks @vincentkoc.
-- **Swabble status config:** honor the global `--config` path when reading service status instead of silently using the default configuration.
-- **ClawHub retry timing:** reject fractional delay-seconds and calendar-normalized invalid Retry-After dates so runtime and release reads stay on their bounded fallback schedule. (#105479) Thanks @qingminlong.
-- **Discord thread archive defaults:** inherit each parent channel's configured auto-archive duration for binding-created threads instead of forcing 60 minutes, while preserving explicit overrides. (#103413) Thanks @wings1029.
-- **Installed plugin loading:** make native-module fallback use jiti's transform path instead of retrying the same synchronous ESM load, preventing Node 24 startup races when official plugins import SDK contract modules. Thanks @vincentkoc.
-- **QA profile channel execution:** partition mixed Crabline channel scenarios into one aggregate host suite so taxonomy-backed profile commands and evidence workflows no longer abort before execution.
-- **Plugin SDK API baseline:** cover every public entrypoint, preserve complete declaration shapes without source-line churn, and run baseline and export-surface guards from changed-file validation. Thanks @vincentkoc and @zw-xysk.
-- **SQLite terminal session recovery:** track physical transcript mutation time in the agent database so killed or timed-out main sessions rotate when transcript writes outlive the registry update, while preserving legacy transcript mtimes during doctor import. Thanks @vincentkoc.
-- **Gateway chat typecheck:** import chat event types from their owning protocol schema after the retired aggregate type module was removed, restoring full project typechecks. Thanks @vincentkoc.
-- **Packaged Crabbox commands:** include the lease-freshness helper imported by the published wrapper so `crabbox:*` commands do not fail with `ERR_MODULE_NOT_FOUND` in npm installs. Thanks @vincentkoc.
-- **Plugin session catalogs:** reject unknown catalog filters, report catalogs as plugin capabilities, and preserve them in SDK registration captures instead of silently returning empty results or classifying catalog-only plugins as capability-free. Thanks @vincentkoc.
-- **Gateway service audit:** treat POSIX shell `-c` wrappers as opaque for the gateway-subcommand check, avoiding false missing-command warnings for shell-wrapped macOS LaunchAgents without parsing inner commands or ports. Fixes #81751. (#81778) Thanks @liaoandi.
-- **Outbound channel bootstrap:** suppress repeated failed plugin activation for the same channel, config, and registry generation while retrying after config or registry reloads. (#100377) Thanks @xialonglee.
-- **OpenAI Realtime client-secret deadlines:** bound voice and transcription secret acquisition to 30 seconds through the guarded fetch boundary while preserving authentication and bounded response parsing. (#102860) Thanks @Alix-007 and @Leon-SK668.
-- **Gateway client watchdog:** keep transport-stall detection active for unbounded and mixed pending requests so dead sockets reject pending requests, reconnect, and never replay rejected requests. (#103407) Thanks @NianJiuZst.
-- **iOS Share Extension drafts:** preserve legitimate shared text beginning with scaffold-like prefixes, remove only exact legacy scaffold lines, avoid treating scheme-like prose as a URL, and deduplicate host-mirrored content. (#103453) Thanks @lin-hongkuan and @harjothkhara.
-- **Telegram reasoning previews:** reposition split reasoning previews through deferred deletion so prior preview messages do not remain stale while preserving client scroll position. (#97828) Thanks @ly-wang19 and @kyle20026.
-- **Feishu native-card threading:** normalize whitespace reply targets once and reuse the shared reply mode for card and media parts so native-card topic replies stay in their thread. (#102804) Thanks @sunlit-deng.
-- **QQBot token requests:** bound token acquisition with the shared 30-second guarded-fetch deadline so stalled singleflight callers fail together, clean up, and can retry. (#102897) Thanks @maweibin.
-- **Canvas A2UI validation:** reject malformed or unsupported JSONL at CLI, agent-tool, and final node-invoke boundaries while preserving native v0.8 dispatch. (#103713) Thanks @qingminglong.
-- **Twilio RCS inbound routing:** normalize RCS consumer addresses only after signed webhook validation so sender matching and sessions work without changing outbound RCS semantics. (#102373) Thanks @clawSean.
-- **ClickClack output sanitization:** strip internal tool and XML scaffolding at the sender boundary, suppress scaffold-only sends, and preserve optional modern delivery IDs. (#103142) Thanks @masatohoshino, @vincentkoc, and @zw-xysk.
-- **Agent-core truncation:** avoid empty-output crashes when head truncation receives negative line or byte ceilings. (#103425) Thanks @qingminglong.
-- **Windows Node resolution:** preserve the current executable when resolving bare case-insensitive `node.exe` entries under hostile `PATH` values. (#103907) Thanks @soldforaloss and @vincentkoc.
-- **Codex runtime switching:** accept the bundled Codex runtime for both `codex/*` and `openai/*` model routes while keeping unsupported provider/runtime pairs rejected. (#103762)
-- **Agent abort cleanup:** serialize prompt lock reacquisition with terminal cleanup so canceled embedded runs do not self-contend on session locks for up to 60 seconds.
-- **Chutes OAuth deadlines:** bound token exchange, profile lookup, and refresh requests, and keep issued tokens when optional userinfo enrichment stalls. (#102026) Thanks @Alix-007.
-- **Control UI workspace avatars:** inline validated agent avatar files in bootstrap and identity responses so Personal card images render without unauthenticated avatar-route requests, while preserving configured emoji precedence. (#102892, #97602) Thanks @LZY3538 and @mtuwei.
-- **Exec safe-bin flags:** auto-approve curated read-only boolean flags for default stdin-only filters while keeping unknown flags, tail follow/retry modes, file operands, and custom profiles fail-closed. (#88953) Thanks @yetval.
-- **iOS session mutations:** scope rename, archive, pin, delete, and fork requests to the selected agent, preserving the parent agent for forked sessions so multi-agent chat actions cannot mutate or create sessions under the wrong agent. (#103366, #103415) Thanks @lin-hongkuan and @harjothkhara.
-- **Swift protocol initializers:** default every schema-optional generated initializer parameter to `nil` so additive protocol fields no longer break SDK construction call sites.
-- **OpenCode Go MiMo catalog:** stop exposing the deprecated `mimo-v2-omni` and `mimo-v2-pro` aliases that reject agent requests, and keep release validation on the active MiMo V2.5 routes. (#103311, #103329) Thanks @krissding.
-- **Audit time filters:** reject impossible calendar dates for `openclaw audit --after` and `--before` instead of rolling them into unintended intervals, while preserving timezone-less timestamp semantics. (#103433) Thanks @qingminglong.
-- **OpenAI-compatible streamed tool calls:** execute complete native tool calls from streams that end with SSE `data: [DONE]` but omit `finish_reason`, while keeping transport EOF and visible-text cases fail-closed. (#98124, #97994) Thanks @SunnyShu0925 and @wszhhx.
-- **xAI provider aliases:** preserve Grok 4.3 and Grok 4.5 thinking profiles, fast-model routing, and encrypted reasoning replay when models use the shipped `x-ai` provider alias instead of clamping valid thinking requests to `minimal`. (#103315)
-- **Doctor state isolation:** prevent automated update and Gateway watch repair from importing and archiving default-home exec or plugin-binding approvals when `OPENCLAW_STATE_DIR` points elsewhere, keep implicit CLI preflight notice-only, and reserve cross-state imports for direct operator doctor runs. (#103247, #103317) Thanks @vincentkoc.
-- **Doctor clean-state guidance:** stop suggesting `openclaw doctor --fix` after a clean run with no config changes while preserving targeted repair hints. (#103233) Thanks @kewang-pika and @nonplace.
-- **Google music generation:** retry one unblocked Lyria response that omits its contractually required audio while keeping prompt blocks and terminal generation stops non-retryable. (#103318)
-- **OpenCode Zen model catalog:** refresh the provider-owned static seed for Claude Sonnet 5, Grok 4.5, Hy3 Free, Kimi K2.7 Code, and MiniMax M3 with verified routing, pricing, limits, and input capabilities, remove retired free-tier rows, and expose the same catalog through unauthenticated model listing. (#103184)
-- **Managed browser launch:** surface asynchronous Chrome bootstrap and runtime spawn failures as browser errors while keeping Gateway alive, and retain process error handling through later lifecycle failures. Thanks @vincentkoc.
-- **Browser node-proxy downloads:** transfer every action-produced download to the Gateway media store, align a 10 MiB per-file and 16 MiB aggregate transport budget, and rewrite plural download paths to Gateway-local files without traversing page-controlled result data.
-- **Gateway startup migrations:** release the shared migration lease before exiting when the selected config changes during startup, allowing immediate retries instead of blocking readiness until the five-minute lease expires. (#103145)
-- **Apple timeout recovery:** return promptly from shared operation deadlines and caller cancellation even when platform work ignores cancellation, while isolating late Gateway handshakes and cleaning up location and permission waiters. (#103066) Thanks @NianJiuZst.
-- **Claude CLI warm sessions:** preserve managed stdio continuity when Claude writes no native transcript, fall back to bounded OpenClaw history only when the exact live child disappears or changes, and keep stateless runs from persisting CLI bindings. (#96841) Thanks @bradreaves.
-- **CLI plugin listing:** skip state-migration runtime loading when no legacy inputs exist, reducing packaged cold-start memory while preserving migrations for legacy plugin indexes and configured session stores.
-- **Unicode-safe bounded text:** preserve complete UTF-16 surrogate pairs when shortening previews, prompts, diagnostics, labels, session keys, link metadata, and identity values across Control UI, CLI, Gateway, plugins, QA, memory, and Android surfaces. (#102625, #102626, #102627, #102816, #102823, #102833, #102877, #102949, #102963, #102969, #102988, #103010, #103034, #103210, #103341, #103487, #103543, #103580, #103646) Thanks @zhangguiping-xydt, @wings1029, @wangyan2026, @Pandah97, @MoerAI, @SunnyShu0925, @zhangqueping, @zw-xysk, @cxbAsDev, @lzyyzznl, @coder-master-0915, @LeonidasLux, @mushuiyu886, @ly85206559, @Simon-XYDT, @lsr911, @vincentkoc, @chengzhichao-xydt, and @wangmiao0668000666.
-- **Cron list table:** sanitize and size bounded cells by terminal display width so CJK, emoji, combining marks, and terminal-control input cannot corrupt alignment or output. (#103616) Thanks @mushuiyu886.
-- **CLI model tables:** sanitize, truncate, and pad model-list cells by rendered terminal width so emoji, CJK, and other wide graphemes keep columns aligned. (#102819) Thanks @Kevin23-design and @vincentkoc.
-- **Skills prompt compaction:** preserve every included skill identity before using the remaining prompt budget for shortened, UTF-16-safe descriptions, retaining trigger guidance without exceeding the hard limit. (#88426) Thanks @abel-zer0, @vincentkoc, @chengzhichao-xydt, @wangmiao0668000666, and @Pandah97.
-- **Channel Markdown code tables:** size columns by rendered display width so CJK, emoji, and mixed-width cells stay aligned across shared Telegram and Discord output. (#55596, #55512) Thanks @sparkyrider and @zjy282.
-- **QQ Bot approval previews:** wrap long sanitized commands and metadata at grapheme boundaries with visible continuation markers and safe fences, keeping desktop QQ reviews readable without changing command content. (#102119, #101979) Thanks @Bartok9 and @xuzhi5858.
-- **Codex computer control:** publish fixed-length coordinate pairs as homogeneous array schemas so Codex app-server can start threads with the `computer` tool instead of rejecting tuple-valued `items`.
-- **Google Chat request deadlines:** bound control calls to 30 seconds while giving media transfers size-aware total budgets and a separate 30-second stalled-body guard, preventing hung Chat API requests without breaking large attachment uploads. (#102227) Thanks @hugenshen.
-- **Google Gemini prefixed model IDs:** recognize `google/gemini-*` and `models/gemini-*` when selecting multimodal function-response behavior, preserving the Gemini 2 image fallback without regressing Gemini 3 inline image responses. (#102382) Thanks @LiLan0125 and @yetval.
-- **Generated provider model catalogs:** keep MiniMax and NVIDIA catalog rows when they advertise audio or video metadata while projecting runtime model inputs to text/image, preventing configured multimodal primaries from being dropped and falling back. (#97858, #97048) Thanks @ly-wang19 and @zackchiutw.
-- **DeepSeek catalog metadata:** align V4 Flash and Pro pricing with DeepSeek's current cache-hit, cache-miss, and output rates; refresh exact catalog metadata written by older onboarding flows; and document the July 24 retirement of the legacy `deepseek-chat` and `deepseek-reasoner` compatibility names. (#103192)
-- **CLI audio transcript files:** treat inferred Whisper and Parakeet text files as authoritative so empty or missing output cannot expose progress/status stdout as user speech. (#87393, #87384) Thanks @kesslerio.
-- **Browser actions on Node 24:** keep browser request cancellation bound to the client and response lifetime instead of Node 24.16+'s prematurely aborted body-stream signal, preventing valid POST actions from failing after JSON parsing. Thanks @obviyus and @vincentkoc.
-- **Android hardware keyboard chat:** send with unmodified Enter on physical keyboards while preserving Shift+Enter and other modified Enter combinations for multiline input. (#101239) Thanks @3ninyt3nin-creator.
-- **Codex yielded native subagents:** keep the parent app-server subscription and shared client alive until yielded native subagent completion delivery settles, preventing lost wakeups and leaked one-shot cleanup.
-- **Control UI session creation:** keep newly created sessions at the front of the stable sidebar order after selecting another session. Thanks @shakkernerd.
-- **FTS-only memory startup:** skip plugin capability discovery when `memorySearch.provider` is explicitly `none`, avoiding an unnecessary cold-start scan.
-- **iOS embedded terminal:** open the terminal-only Control surface directly while native Gateway authentication connects instead of exposing the Web UI login screen.
-- **Source build portability:** keep tsdown configuration self-contained so builds do not depend on resolving the tsdown package from unrun's temporary module directory. Thanks @vincentkoc.
-- **Browser tab adoption:** preserve the prior implicit tab and stable aliases when new MCP, Playwright, or CDP targets fail final safety validation, abort after creation, or cannot be rediscovered; validate labels before creating tabs and limit managed cleanup to adopted targets. (#105301) Thanks @hugenshen.
-- **Mattermost block streaming:** preserve complete, non-duplicated text and tool blocks in draft preview mode, and honor normal block streaming when preview streaming is disabled. (#87449) Thanks @yetval and @Senseonics-AI.
-- **iOS development app identity:** keep the development app labeled OpenClaw while using its distinct debug icon to differentiate it from release builds.
-- **Android chat recovery:** preserve optimistic user messages and locally owned runs while reconnect and sequence-gap history snapshots catch up, preventing sent messages from disappearing or stale runs from taking ownership. (#100197)
-- **iOS Voice Wake cleanup:** avoid initializing the microphone audio pipeline while disabling inactive Voice Wake, preventing simulator launch aborts and unnecessary audio setup.
-- **Agent stop recovery:** prevent late-aborting prompts from reacquiring orphaned session locks after teardown, so `/stop` leaves the conversation ready for the next turn.
-- **Local Gateway CLI auth:** keep loopback CLI token/password calls off durable device scopes so read probes cannot block later write/admin commands behind a stale pairing baseline. (#95997) Thanks @vincentkoc.
-- **MCP schema diagnostics:** attribute draft-2020-12 compiler failures to the external MCP schema so malformed patterns produce actionable setup errors. Thanks @vincentkoc.
-- **Amazon Bedrock control-plane deadlines:** bound model discovery and application inference-profile lookups, preserve caller cancellation, and close short-lived SDK clients after each request path. Thanks @Alix-007 and @vincentkoc.
-- **Reply pre-delivery recovery:** bound each pre-delivery callback with an owner-overridable deadline, release serialized reply lanes after hung plugin work, and preserve durable final-delivery retry state only when transport never started. (#104256) Thanks @NianJiuZst and @BenjaminBrossi.
-- **Signal native quote replies:** preserve the active inbound message as a native quote across agent, explicit, durable, and chunked sends while keeping reply-mode policy inside the Signal plugin. (#105347) Thanks @jesse-merhi and @vincentkoc.
-- **Media-store remote downloads:** bound response-header waits and stalled bodies, close abandoned redirect and error responses, and remove partial temp files so hung sources cannot pin callers. (#104624) Thanks @hugenshen.
-- **Cron llama.cpp tool schemas:** keep the model-facing cron declaration schema compatible with llama.cpp while retaining gateway and runtime nonblank validation. Fixes #107449. (#108360) Thanks @lee-xydt and @Patt92.
-- **Terminal sessions:** preserve early keystrokes, enable paired-node terminal actions, authorize paired-node catalog reads, recover after stale Control UI connections, and keep slow clients attached under heavy output. (#107214, #107361, #107410, #107419, #107348) Thanks @vincentkoc and @zw-xysk.
-- **Control UI configuration:** auto-save validated edits, restore autosave gates, show unapplied-restart state, and keep normal content scrolling and selection behavior. (#107458, #107477, #107577, #107349)
-- **Signal recovery:** reconnect after stalled container handshakes, prevent overlapping daemons during restart, and preserve username targets during phone normalization. (#107386, #107409, #107365) Thanks @hugenshen, @ZHOUKAILIAN, @UberKitten, and @ly-wang19.
-- **Authorization boundaries:** require operator-admin authority for paired-node directory browsing and block prototype pollution in migration config merges. (#106004, #106116) Thanks @yangxiansheng, @joshavant, @yetval, and @ruel225.
-- **Conversation identity:** retain speaker attribution across group turns and reduce malformed Discord guild reply tool calls. (#107025, #107474) Thanks @lonexreb.
-- **Provider setup:** show OpenRouter OAuth denial errors, find credentials stored under auth aliases, and keep unresolved API-key providers visible for repair. (#105448, #106736, #106754) Thanks @VectorPeak and @altaywtf.
-- **Claude and Codex sessions:** keep Claude turns open for native background work, avoid Codex shutdown warnings after live updates, complete Codex onboarding login handoff, and retire completed hook relays. (#106347, #106418, #107174, #106899) Thanks @obviyus, @fuller-stack-dev, and @bek91.
-- **Apple apps:** connect iPhone and Watch clients to protocol-v3 Gateways, reject incomplete attachment shares, and honor the pinned Swift toolchain in iOS release archives. (#106294, #106513, #107188) Thanks @jincheng-xydt, @harjothkhara, and @joshavant.
-- **Memory reliability:** preserve UTF-8 across split QMD output, keep canonical cache rows during legacy migration, and accept leading-zero JSON content lengths. (#107263, #107243, #105916) Thanks @wahaha1223, @felirami, @Tony-ooo, @qingminlong, @vincentkoc, and @zw-xysk.
-- **Skills and Workshop:** keep globally installed ClawHub skills tracked, clean orphaned usage rows, surface verification errors, and default Workshop approvals to automatic handling. (#106479, #107144, #107143, #107690) Thanks @ml12580, @mnowrot, @SunnyShu0925, and @shakkernerd.
-- **Bounded network calls:** time out Google Chat authentication, Slack directory and read-mode calls, and Twitch user lookups instead of hanging. (#106178, #106643, #107103, #105883, #107360) Thanks @QiuYuang, @Monkey-wusky, @maweibin, @zw-xysk, and @Alix-007.
-- **Channel delivery:** warn when scalar streaming falls back and make ClickClack media delivery durable while using the selected model's runtime budget. (#106796, #105775) Thanks @jjjhenriksen.
-- **Plugin management:** honor standard ClawHub API comparators and let Control UI administrators enable installed plugins. (#106889, #106318)
-- **Runtime configuration:** preserve resolved cache-retention values, apply explicit environment-variable removals, and keep dispatched Workboard cards from sticking in running state. (#106069, #107258, #107271) Thanks @krissding, @jalfaro2876, and @pgondhi987.
-- **Input and output safety:** redact sensitive migration terminal output, normalize managed git-package identities, and avoid retaining raw command output in compacted Tokenjuice metadata. (#106806, #107637, #107705) Thanks @yetval.
-- **Network and resource matching:** share canonical NO_PROXY behavior and honor nested ignore patterns plus escaped literal exclamation marks. (#107711, #106258) Thanks @moguangyu5-design.
-- **Markdown frontmatter:** preserve coerced fallback values when YAML nodes cannot be represented directly.
+- **Claude CLI stability and policy:** prevent Gateway crashes after auth-profile turns, forward selected profiles, enforce cron tool policy, and honor provider reasoning-effort maps. (#112550, #112458, #112457, #112632) Fixes #112549, #95612, #107668, #112454 Thanks @fuller-stack-dev, @cstreeter, and @josh-cornelius.
+- **Compaction planning bounds:** cap worker payloads used for compaction planning so oversized sessions cannot exhaust the planner. (#112593) Fixes #100635 Thanks @HOYALIM and @aniruddhaadak80.
+- **Signal reaction targets:** keep status reactions attached to the normalized message target instead of drifting across target aliases. (#112607) Fixes #112604 Thanks @joshavant.
+- **Startup and onboarding recovery:** reset every agent's setup session, preserve classic Gateway options, recover expired wizards, survive inference-owner drift, prefer subscription logins, and keep fresh-state startup responsive with prepared runtimes. (#112610, #112396, #112286, #112378, #112262) Thanks @jalehman and @vincentkoc.
+- **Plugin runtime readiness:** refresh prepared provider metadata and restore external plugin runtime imports. (#112699, #112021) Thanks @fuller-stack-dev.
+- **SQLite compaction safety:** stop compaction before mutating hard-linked WAL state. (#112224) Thanks @vincentkoc.
+- **Dependency request hardening:** patch URL host-confusion handling, update the pinned URL parser, and harden protobuf decoding without changing user configuration. (#112444, #112443, #112184) Thanks @vincentkoc and @jalehman.
+- **Environment and webhook boundaries:** block C-preprocessor host overrides and pin Plivo callbacks to their public webhook path. (#112560, #112559) Thanks @pgondhi987.
+- **Ollama context windows:** preserve cloud-model context-window metadata during catalog normalization. (#112430) Thanks @IWhatsskill.
+- **Non-Git direct sessions:** allow direct sessions in ordinary folders without requiring a Git repository. (#112433) Related #112242.
+- **Stable composer handoff:** keep one send bubble through history ownership transfer and preserve live session narration across chat switches. (#112567, #112526)
+- **Cron execution contracts:** persist explicit scheduled-tool authority, honor script limits and permanent failures, and stop command jobs from warning about missing agents. (#112483, #112415, #112043) Thanks @joshavant.
+- **macOS privacy and transport:** require explicit consent for privacy-sensitive access and reject public plaintext Gateway profiles. (#112321, #112161) Related #112217, #112219, #112220.
+- **Tlon auth cleanup:** cancel and drain failed authentication response bodies. (#112059)
+- **OpenAI auth and quota feedback:** finish model login cleanly and show accurate quota and rate-limit alerts. (#112211, #112047) Thanks @RomneyDa.
+- **Plugin trust diagnostics:** clarify untracked-plugin warnings and stop `plugins list --json` from emitting empty harness identifiers. (#112249, #112235) Fixes #112234 Thanks @RomneyDa.
+- **Subagent and provider routing:** honor requested subagent models and revalidate provider overlays before applying them. (#112393, #112334) Fixes #91171 Thanks @mikasa0818, @wolfeee, and @VACInc.
+- **macOS test identity:** isolate parallel Swift suites so test processes cannot race on shared identity. (#112563)
+- **Memory Wiki doctor checks:** stop keyed agents from producing false doctor errors. (#112541)
+- **Cloud-worker reclaim:** reclaim sessions correctly after retained workspace conflicts. (#112186)
+
+### Upcoming deprecations
+
+- **July 25 — agent harness compatibility review:** `agent-harness-sdk-alias` reaches its scheduled review date, but removal remains blocked: the inventory's `openclaw/plugin-sdk/agent-runtime` candidate is itself a deprecated broad barrel, and the shipped `agent-harness` aliases stay supported until maintainers publish a replacement window backed by external-usage proof. See [Agent harness SDK](https://docs.openclaw.ai/plugins/sdk-agent-harness) and [Plugin compatibility](https://docs.openclaw.ai/plugins/compatibility).
+- **July 26 — agent and Gateway config:** `agents.defaults.llm.idleTimeoutSeconds` (`doctor-agent-llm-timeout`) → `models.providers.<id>.timeoutSeconds`; `agents.*.embeddedHarness` (`doctor-agent-runtime-embedded-harness`) → provider/model `agentRuntime`; `agents.*.embeddedPi` (`doctor-agent-embedded-pi-config`) → `agents.*.embeddedAgent`; `agents.*.sandbox.perSession` (`doctor-agent-sandbox-persession`) → `agents.*.sandbox.scope`; top-level `heartbeat` (`doctor-top-level-heartbeat`) → agent/channel heartbeat defaults; `mcp.servers.*.type` (`doctor-mcp-server-type-alias`) → `mcp.servers.*.transport`; and `gateway.bind` host aliases (`doctor-gateway-bind-host-aliases`) → `gateway.bind.mode`. Run `openclaw doctor --fix`; see [Agent configuration](https://docs.openclaw.ai/gateway/config-agents), [MCP](https://docs.openclaw.ai/cli/mcp), and [Gateway configuration](https://docs.openclaw.ai/gateway/configuration).
+- **July 26 — channel and media config:** `audio.transcription` (`doctor-audio-transcription-command`) → capability-tagged `tools.media.models`; `threadBindings.ttlHours` (`doctor-channel-thread-binding-ttl`) → `threadBindings.idleHours`; retired `messages.queue.*` modes (`doctor-message-queue-steering-modes`) → `steer`, `followup`, `collect`, or `interrupt`; `channels.<id>.dm.*` (`doctor-channel-dm-aliases`) → `dmPolicy`/`allowFrom`; and legacy scalar/chunk streaming fields (`doctor-channel-streaming-aliases`) → `channels.<id>.streaming.*`. See [Media](https://docs.openclaw.ai/tools/media-overview), [Channel routing](https://docs.openclaw.ai/channels/channel-routing), and [Queue modes](https://docs.openclaw.ai/concepts/queue).
+- **July 26 — TTS config:** provider blocks under `messages.tts.*` or Voice Call (`doctor-tts-provider-aliases`) → `tts.providers.<provider>` with `microsoft`; legacy `tts.enabled` fields (`doctor-tts-enabled-auto-mode`) → supported `auto` modes; and `voice`/`voiceName`/`voiceId` speaker fields (`doctor-tts-speaker-selection-fields`) → `speakerVoice`/`speakerVoiceId`. See [TTS](https://docs.openclaw.ai/tools/tts).
+- **July 26 — plugin registry and web config:** authored `plugins.installs` (`doctor-plugin-install-config-ledger`) → the SQLite `installed_plugin_index`; bundled source paths and legacy provider allowlists (`doctor-bundled-plugin-load-paths`, `doctor-bundled-provider-discovery-allowlist`) → packaged plugins plus the persisted registry; `tools.web.search.*`, `tools.web.fetch.firecrawl`, and `tools.web.x_search.apiKey` (`doctor-web-search-plugin-config`, `doctor-web-fetch-plugin-config`, `doctor-x-search-plugin-config`) → plugin-owned config; legacy Talk provider scalars (`doctor-talk-provider-shape`) → `talk.providers.<provider>`; and untyped `toolsBySender` keys (`doctor-legacy-tools-by-sender`) → typed sender keys. See [Plugin registry](https://docs.openclaw.ai/cli/plugins#registry), [Web tools](https://docs.openclaw.ai/tools/web), and [Exec approvals](https://docs.openclaw.ai/tools/exec-approvals).
 
 ### Complete contribution record
 
-This audited record covers the complete 5680791d7f0a837a14e02fd63d715bd6dd8054d2..c7ba845cd06141ab9e261fa37aea34e42dee6e6b history: 3957 merged PRs. The generation manifest also supplies direct commits as editorial input; the grouped notes above prioritize user impact.
+This audited record covers the complete a5b2e4167de860fe3fe3da7284cd5f36883560c8..97697b5d5fd6983ae1f7954b0f5943415c14fcb3 history: 1025 merged PRs. The generation manifest also supplies direct commits as editorial input; the grouped notes above prioritize user impact.
+
+Shipped baseline exclusions: v2026.7.2-beta.3 (1831 PRs: #45315, #68685, #69707, #70737, #77158, #77213, #78022, #79882, #86386, #86900, #88919, #89491, #89745, #89783, #89821, #89864, #90263, #90610, #90779, #90799, #92011, #92294, #92340, #93293, #93559, #93833, #94494, #94697, #95010, #95368, #95480, #95604, #95722, #95729, #95838, #95852, #95996, #96230, #96250, #96267, #96554, #97224, #97233, #97492, #97827, #98022, #98236, #98251, #98390, #98422, #98480, #98541, #98543, #98546, #98567, #98569, #98663, #98667, #98668, #98670, #98795, #98797, #98801, #98802, #99051, #99079, #99287, #99312, #99394, #99396, #99404, #99504, #100140, #100229, #100237, #101253, #101265, #101268, #101354, #101453, #101472, #101696, #101708, #101730, #101746, #101748, #101752, #101773, #101774, #101775, #101792, #101826, #101998, #102068, #102114, #102197, #102271, #102470, #102481, #102698, #102903, #103116, #103266, #103294, #103323, #103369, #103512, #103513, #103518, #103582, #103589, #103604, #103781, #103786, #103799, #103829, #103855, #103914, #103918, #104120, #104209, #104216, #104259, #104288, #104340, #104430, #104431, #104495, #104516, #104580, #104585, #104629, #104663, #104708, #104824, #104835, #104836, #104840, #104841, #104851, #104853, #104901, #104935, #104940, #104966, #104967, #104968, #104989, #105001, #105013, #105017, #105066, #105086, #105089, #105105, #105108, #105158, #105163, #105217, #105240, #105241, #105263, #105297, #105301, #105381, #105470, #105477, #105544, #105549, #105553, #105556, #105584, #105633, #105724, #105780, #105793, #105863, #105874, #105883, #105886, #105893, #105903, #105910, #105978, #106027, #106035, #106036, #106066, #106069, #106073, #106077, #106081, #106100, #106163, #106178, #106181, #106241, #106258, #106293, #106359, #106365, #106370, #106376, #106384, #106385, #106386, #106393, #106395, #106396, #106397, #106398, #106399, #106400, #106407, #106412, #106416, #106420, #106421, #106453, #106454, #106456, #106473, #106479, #106484, #106485, #106496, #106497, #106498, #106515, #106526, #106532, #106538, #106541, #106545, #106638, #106737, #106799, #106803, #106826, #106840, #106850, #106864, #106899, #106926, #106942, #106959, #106994, #106995, #106997, #107009, #107025, #107043, #107046, #107050, #107063, #107066, #107072, #107086, #107101, #107103, #107116, #107122, #107123, #107142, #107143, #107144, #107146, #107147, #107148, #107150, #107151, #107156, #107157, #107162, #107165, #107166, #107167, #107168, #107169, #107173, #107174, #107177, #107178, #107181, #107186, #107188, #107189, #107190, #107191, #107193, #107194, #107196, #107197, #107198, #107200, #107201, #107204, #107206, #107208, #107210, #107212, #107213, #107214, #107217, #107229, #107230, #107231, #107232, #107233, #107234, #107235, #107236, #107238, #107241, #107242, #107243, #107245, #107247, #107249, #107252, #107253, #107254, #107258, #107259, #107260, #107263, #107264, #107270, #107271, #107272, #107275, #107282, #107284, #107285, #107286, #107287, #107288, #107291, #107293, #107294, #107296, #107297, #107298, #107301, #107307, #107310, #107311, #107312, #107315, #107316, #107317, #107319, #107320, #107321, #107323, #107325, #107326, #107327, #107328, #107331, #107332, #107336, #107337, #107338, #107339, #107340, #107342, #107345, #107346, #107348, #107349, #107351, #107353, #107354, #107356, #107357, #107358, #107360, #107361, #107364, #107365, #107367, #107369, #107370, #107371, #107372, #107373, #107377, #107379, #107380, #107381, #107382, #107383, #107385, #107386, #107387, #107390, #107392, #107393, #107395, #107396, #107398, #107400, #107402, #107403, #107404, #107405, #107407, #107409, #107410, #107411, #107412, #107414, #107417, #107419, #107420, #107421, #107422, #107424, #107427, #107428, #107431, #107432, #107435, #107436, #107438, #107440, #107442, #107443, #107444, #107445, #107451, #107454, #107455, #107456, #107457, #107458, #107459, #107460, #107462, #107470, #107471, #107472, #107474, #107475, #107476, #107477, #107478, #107480, #107481, #107483, #107485, #107540, #107542, #107543, #107545, #107548, #107553, #107554, #107560, #107561, #107563, #107567, #107569, #107570, #107572, #107573, #107574, #107576, #107577, #107578, #107583, #107584, #107585, #107594, #107598, #107599, #107602, #107604, #107606, #107610, #107612, #107613, #107616, #107617, #107618, #107619, #107621, #107625, #107631, #107633, #107634, #107636, #107637, #107638, #107640, #107642, #107644, #107646, #107652, #107653, #107654, #107657, #107665, #107670, #107673, #107674, #107675, #107677, #107678, #107680, #107688, #107689, #107690, #107691, #107692, #107695, #107696, #107697, #107699, #107700, #107701, #107702, #107703, #107705, #107706, #107709, #107710, #107711, #107714, #107715, #107716, #107717, #107718, #107719, #107720, #107723, #107724, #107726, #107728, #107730, #107731, #107733, #107734, #107735, #107737, #107738, #107740, #107745, #107747, #107748, #107749, #107751, #107752, #107753, #107754, #107756, #107757, #107758, #107759, #107760, #107762, #107763, #107764, #107767, #107768, #107771, #107772, #107773, #107774, #107775, #107776, #107777, #107778, #107779, #107780, #107781, #107783, #107784, #107786, #107789, #107791, #107793, #107794, #107796, #107798, #107799, #107801, #107802, #107803, #107806, #107807, #107808, #107809, #107813, #107817, #107819, #107820, #107822, #107825, #107826, #107827, #107828, #107830, #107836, #107837, #107838, #107844, #107847, #107848, #107849, #107854, #107858, #107859, #107862, #107863, #107865, #107869, #107870, #107874, #107881, #107883, #107884, #107887, #107892, #107893, #107894, #107898, #107900, #107903, #107906, #107907, #107908, #107912, #107913, #107923, #107924, #107926, #107927, #107932, #107936, #107938, #107940, #107942, #107948, #107949, #107951, #107953, #107954, #107955, #107960, #107961, #107965, #107966, #107969, #107970, #107973, #107976, #107977, #107979, #107983, #107984, #107985, #107986, #107987, #107989, #107990, #107993, #107997, #107999, #108003, #108004, #108008, #108009, #108013, #108015, #108017, #108018, #108019, #108020, #108022, #108023, #108024, #108026, #108032, #108034, #108035, #108037, #108038, #108040, #108041, #108042, #108043, #108045, #108046, #108047, #108048, #108050, #108051, #108052, #108054, #108057, #108058, #108062, #108063, #108064, #108065, #108067, #108072, #108074, #108076, #108078, #108081, #108090, #108091, #108093, #108094, #108095, #108096, #108099, #108100, #108101, #108102, #108103, #108105, #108108, #108110, #108111, #108112, #108113, #108114, #108115, #108116, #108118, #108120, #108121, #108122, #108123, #108125, #108127, #108129, #108130, #108132, #108136, #108137, #108138, #108139, #108145, #108146, #108147, #108150, #108151, #108153, #108156, #108157, #108158, #108159, #108160, #108161, #108162, #108163, #108164, #108165, #108166, #108167, #108169, #108170, #108171, #108172, #108173, #108179, #108181, #108184, #108189, #108191, #108193, #108197, #108199, #108201, #108202, #108203, #108204, #108205, #108207, #108208, #108209, #108210, #108212, #108214, #108218, #108219, #108221, #108223, #108227, #108228, #108230, #108234, #108239, #108240, #108241, #108243, #108247, #108248, #108252, #108253, #108254, #108258, #108259, #108260, #108261, #108264, #108266, #108268, #108271, #108275, #108276, #108279, #108281, #108282, #108283, #108285, #108290, #108292, #108295, #108296, #108298, #108301, #108304, #108307, #108308, #108309, #108310, #108311, #108317, #108321, #108325, #108330, #108332, #108334, #108335, #108336, #108338, #108339, #108340, #108343, #108346, #108347, #108348, #108350, #108351, #108353, #108354, #108355, #108360, #108363, #108364, #108365, #108368, #108369, #108371, #108375, #108376, #108377, #108380, #108381, #108382, #108385, #108386, #108390, #108392, #108394, #108396, #108397, #108398, #108400, #108401, #108403, #108405, #108408, #108410, #108414, #108415, #108416, #108417, #108418, #108419, #108420, #108422, #108423, #108424, #108426, #108429, #108430, #108433, #108434, #108437, #108440, #108448, #108449, #108450, #108451, #108453, #108454, #108455, #108457, #108458, #108463, #108464, #108465, #108467, #108468, #108472, #108476, #108478, #108479, #108480, #108481, #108483, #108484, #108485, #108487, #108492, #108493, #108497, #108499, #108500, #108502, #108503, #108504, #108505, #108508, #108510, #108512, #108513, #108515, #108516, #108518, #108521, #108523, #108531, #108537, #108538, #108539, #108543, #108545, #108546, #108547, #108548, #108551, #108556, #108558, #108561, #108563, #108564, #108567, #108569, #108575, #108576, #108577, #108578, #108579, #108583, #108584, #108589, #108592, #108594, #108596, #108597, #108602, #108603, #108605, #108606, #108609, #108611, #108612, #108615, #108616, #108617, #108618, #108619, #108620, #108621, #108622, #108626, #108627, #108628, #108630, #108633, #108634, #108636, #108637, #108638, #108641, #108643, #108646, #108648, #108649, #108650, #108651, #108652, #108655, #108657, #108661, #108663, #108667, #108668, #108669, #108670, #108672, #108674, #108675, #108678, #108679, #108680, #108682, #108683, #108684, #108685, #108689, #108694, #108696, #108697, #108698, #108699, #108700, #108701, #108706, #108708, #108709, #108710, #108714, #108715, #108717, #108718, #108721, #108723, #108725, #108726, #108728, #108730, #108734, #108735, #108736, #108737, #108739, #108741, #108742, #108743, #108744, #108745, #108750, #108751, #108752, #108755, #108756, #108757, #108758, #108759, #108760, #108761, #108763, #108764, #108765, #108766, #108768, #108770, #108771, #108772, #108775, #108776, #108777, #108778, #108779, #108780, #108783, #108784, #108785, #108787, #108788, #108790, #108791, #108797, #108798, #108800, #108801, #108804, #108805, #108806, #108807, #108810, #108813, #108815, #108816, #108817, #108823, #108825, #108826, #108827, #108828, #108829, #108830, #108832, #108833, #108834, #108835, #108838, #108840, #108848, #108851, #108853, #108855, #108856, #108857, #108858, #108862, #108863, #108866, #108868, #108870, #108871, #108873, #108875, #108877, #108879, #108880, #108882, #108883, #108886, #108887, #108889, #108894, #108895, #108897, #108898, #108900, #108903, #108904, #108909, #108910, #108911, #108913, #108914, #108917, #108921, #108922, #108924, #108925, #108926, #108927, #108928, #108929, #108930, #108932, #108935, #108937, #108938, #108940, #108941, #108942, #108947, #108948, #108949, #108950, #108953, #108955, #108960, #108964, #108966, #108967, #108969, #108970, #108972, #108973, #108977, #108983, #108985, #108990, #108991, #108992, #109000, #109005, #109007, #109008, #109013, #109022, #109028, #109037, #109051, #109052, #109056, #109064, #109071, #109075, #109083, #109089, #109090, #109102, #109107, #109108, #109110, #109111, #109114, #109115, #109117, #109118, #109119, #109127, #109140, #109141, #109142, #109144, #109146, #109147, #109149, #109150, #109151, #109154, #109157, #109160, #109162, #109164, #109166, #109167, #109168, #109169, #109173, #109174, #109176, #109179, #109181, #109182, #109183, #109184, #109185, #109188, #109192, #109194, #109195, #109196, #109199, #109200, #109201, #109202, #109205, #109206, #109207, #109210, #109211, #109212, #109215, #109220, #109222, #109223, #109226, #109229, #109230, #109232, #109233, #109236, #109237, #109238, #109239, #109241, #109242, #109243, #109244, #109246, #109247, #109248, #109250, #109252, #109253, #109254, #109255, #109257, #109258, #109259, #109260, #109266, #109267, #109271, #109272, #109273, #109279, #109281, #109282, #109284, #109287, #109289, #109290, #109291, #109294, #109296, #109297, #109298, #109309, #109311, #109314, #109315, #109317, #109318, #109319, #109320, #109322, #109323, #109324, #109325, #109326, #109328, #109330, #109331, #109332, #109333, #109335, #109336, #109338, #109339, #109341, #109342, #109343, #109344, #109345, #109346, #109347, #109348, #109350, #109354, #109355, #109358, #109359, #109361, #109362, #109363, #109365, #109366, #109369, #109371, #109372, #109373, #109374, #109377, #109380, #109383, #109386, #109393, #109394, #109398, #109399, #109403, #109410, #109411, #109413, #109417, #109418, #109422, #109425, #109426, #109428, #109429, #109430, #109432, #109433, #109438, #109440, #109441, #109442, #109444, #109445, #109453, #109454, #109457, #109463, #109464, #109466, #109468, #109469, #109475, #109476, #109477, #109480, #109481, #109483, #109485, #109486, #109489, #109494, #109497, #109501, #109505, #109507, #109508, #109510, #109513, #109517, #109519, #109525, #109530, #109539, #109540, #109541, #109546, #109548, #109553, #109556, #109557, #109560, #109564, #109575, #109576, #109579, #109580, #109585, #109586, #109587, #109589, #109590, #109591, #109592, #109593, #109596, #109604, #109605, #109609, #109610, #109612, #109614, #109615, #109617, #109618, #109621, #109622, #109624, #109625, #109627, #109628, #109629, #109630, #109631, #109633, #109635, #109636, #109640, #109648, #109651, #109652, #109653, #109655, #109660, #109663, #109664, #109665, #109666, #109667, #109668, #109669, #109671, #109674, #109676, #109677, #109679, #109681, #109682, #109683, #109685, #109686, #109687, #109688, #109689, #109690, #109694, #109695, #109696, #109698, #109701, #109702, #109705, #109706, #109708, #109709, #109710, #109712, #109714, #109715, #109716, #109717, #109718, #109719, #109720, #109721, #109722, #109724, #109725, #109728, #109731, #109737, #109739, #109740, #109741, #109742, #109743, #109749, #109750, #109751, #109752, #109755, #109757, #109762, #109764, #109766, #109769, #109772, #109773, #109776, #109778, #109780, #109790, #109791, #109794, #109796, #109799, #109800, #109801, #109803, #109804, #109805, #109807, #109808, #109809, #109810, #109811, #109813, #109817, #109818, #109819, #109822, #109826, #109827, #109828, #109837, #109841, #109844, #109845, #109857, #109861, #109863, #109866, #109869, #109870, #109873, #109874, #109876, #109877, #109878, #109886, #109887, #109888, #109892, #109894, #109895, #109899, #109901, #109903, #109905, #109907, #109910, #109913, #109914, #109915, #109916, #109917, #109919, #109921, #109922, #109925, #109926, #109927, #109929, #109934, #109936, #109947, #109952, #109954, #109955, #109964, #109966, #109968, #109977, #109982, #109987, #109995, #109999, #110000, #110006, #110007, #110010, #110012, #110013, #110014, #110019, #110026, #110027, #110028, #110029, #110030, #110034, #110041, #110042, #110054, #110062, #110069, #110076, #110078, #110081, #110083, #110085, #110088, #110089, #110090, #110091, #110092, #110094, #110095, #110096, #110098, #110100, #110104, #110105, #110106, #110107, #110111, #110116, #110117, #110118, #110121, #110122, #110127, #110130, #110133, #110135, #110141, #110158, #110159, #110161, #110167, #110169, #110170, #110172, #110173, #110174, #110177, #110183, #110191, #110193, #110196, #110200, #110205, #110207, #110211, #110213, #110215, #110218, #110220, #110221, #110223, #110225, #110226, #110227, #110228, #110233, #110238, #110239, #110241, #110242, #110245, #110246, #110248, #110252, #110254, #110255, #110259, #110264, #110267, #110268, #110269, #110271, #110272, #110273, #110274, #110275, #110276, #110277, #110278, #110279, #110281, #110282, #110283, #110285, #110287, #110288, #110289, #110290, #110291, #110292, #110295, #110298, #110305, #110308, #110310, #110311, #110312, #110314, #110315, #110316, #110317, #110323, #110326, #110327, #110330, #110331, #110332, #110335, #110339, #110341, #110351, #110353, #110357, #110358, #110360, #110361, #110363, #110364, #110365, #110366, #110369, #110371, #110372, #110375, #110380, #110381, #110386, #110389, #110391, #110395, #110396, #110403, #110405, #110406, #110409, #110413, #110416, #110417, #110418, #110422, #110424, #110426, #110428, #110445, #110446, #110447, #110448, #110449, #110452, #110453, #110454, #110456, #110459, #110460, #110461, #110462, #110463, #110466, #110468, #110469, #110470, #110472, #110474, #110476, #110477, #110478, #110479, #110481, #110484, #110486, #110487, #110491, #110493, #110494, #110496, #110497, #110502, #110505, #110508, #110509, #110517, #110518, #110520, #110522, #110523, #110524, #110525, #110528, #110530, #110532, #110533, #110534, #110540, #110541, #110543, #110548, #110549, #110550, #110551, #110552, #110554, #110556, #110557, #110563, #110566, #110567, #110574, #110583, #110585, #110587, #110589, #110595, #110596, #110607, #110609, #110610, #110614, #110629).
 
 #### Pull requests
 
-- **PR #109243** Thanks @mushuiyu886 and @xydt-juyaohui.
-- **PR #103781** Thanks @xydigit-zt.
-- **PR #109320**
-- **PR #109326**
-- **PR #109290** Related #109288.
-- **PR #109215** Thanks @mushuiyu886.
-- **PR #109323**
-- **PR #108830** Thanks @Leon-SK668.
-- **PR #106496** Thanks @hugenshen.
-- **PR #109332**
-- **PR #106077** Thanks @tzy-17.
-- **PR #109335** Related #109334.
-- **PR #109007** Thanks @zhangguiping-xydt.
-- **PR #109315** Thanks @RomneyDa.
-- **PR #109333**
-- **PR #105017** Thanks @tzy-17.
-- **PR #109339** Thanks @RomneyDa.
-- **PR #109311**
-- **PR #108851**
-- **PR #109338**
-- **PR #101268** Thanks @Pick-cat.
-- **PR #109330**
-- **PR #109149** Thanks @RileyJJY.
-- **PR #109342**
-- **PR #109343**
-- **PR #109309**
-- **PR #109317**
-- **PR #109366** Thanks @shakkernerd.
-- **PR #109336**
-- **PR #109348**
-- **PR #109324** Related #109321. Thanks @krissding and @JunnanZ.
-- **PR #109358**
-- **PR #109206** Thanks @ZengWen-DT.
-- **PR #109372** Thanks @RomneyDa.
-- **PR #109205** Thanks @ZengWen-DT.
-- **PR #109373**
-- **PR #109369**
-- **PR #109354**
-- **PR #99504** Related #99470. Thanks @maweibin and @Veda-openclaw.
-- **PR #109345**
-- **PR #109383**
-- **PR #109371**
-- **PR #109377** Thanks @RomneyDa.
-- **PR #109179** Thanks @wahaha1223.
-- **PR #109344**
-- **PR #109196** Thanks @zhangguiping-xydt and @Monkey-wusky.
-- **PR #109398** Thanks @shakkernerd.
-- **PR #109319** Thanks @Alix-007.
-- **PR #109253** Thanks @Alix-007.
-- **PR #109346**
-- **PR #88919** Thanks @plexustech2006.
-- **PR #109341** Thanks @sibbl.
-- **PR #109220** Thanks @zw-xysk.
-- **PR #109241** Thanks @Alix-007.
-- **PR #109328**
-- **PR #109410**
-- **PR #109347**
-- **PR #98251** Related #98250. Thanks @ooiuuii.
-- **PR #101792** Thanks @100yenadmin.
-- **PR #109199** Thanks @mushuiyu886.
-- **PR #109207** Thanks @mushuiyu886.
-- **PR #109426**
-- **PR #109429** Thanks @shakkernerd.
-- **PR #109287** Related #109219. Thanks @ZengWen-DT and @devodriqroberts.
-- **PR #109430**
-- **PR #109380**
-- **PR #109071** Thanks @zhangguiping-xydt.
-- **PR #109254**
-- **PR #109294** Thanks @pacoa-kdbg.
-- **PR #109167** Thanks @qingminglong.
-- **PR #109359**
-- **PR #108829** Thanks @iloveleon19 and @dodoma0919.
-- **PR #107825** Related #107823. Thanks @ooiuuii.
-- **PR #109438**
-- **PR #109374**
-- **PR #109425**
-- **PR #108953** Thanks @sunlit-deng.
-- **PR #108764**
-- **PR #109250**
-- **PR #90799** Related #99131. Thanks @wangwllu and @shakkernerd and @jwest75674.
-- **PR #103323** Thanks @NianJiuZst.
-- **PR #108184** Thanks @Leon-SK668.
-- **PR #99396** Related #99395. Thanks @smthfoxy.
-- **PR #98236** Thanks @jalehman and @smthfoxy.
-- **PR #107315** Thanks @smthfoxy.
-- **PR #109457**
-- **PR #109413**
-- **PR #108193** Thanks @Leon-SK668.
-- **PR #109365**
-- **PR #108208** Thanks @Leon-SK668.
-- **PR #109475**
-- **PR #109466**
-- **PR #109445**
-- **PR #108120** Thanks @ZengWen-DT.
-- **PR #109480**
-- **PR #108172** Thanks @Leon-SK668.
-- **PR #101354** Thanks @100yenadmin.
-- **PR #105217** Thanks @qingminlong.
-- **PR #104840** Thanks @zhangguiping-xydt.
-- **PR #109489**
-- **PR #105158** Thanks @mushuiyu886.
-- **PR #109331**
-- **PR #100237** Related #100235. Thanks @ooiuuii.
-- **PR #105105** Thanks @qingminlong.
-- **PR #109258**
-- **PR #98022** Thanks @ooiuuii.
-- **PR #109507**
-- **PR #109393**
-- **PR #109481** Thanks @Leon-SK668.
-- **PR #109505**
-- **PR #109444**
-- **PR #109469** Thanks @Leon-SK668.
-- **PR #109513**
-- **PR #109454** Thanks @wings1029.
-- **PR #109517**
-- **PR #109453** Thanks @wings1029.
-- **PR #109212**
-- **PR #109530**
-- **PR #109546**
-- **PR #109553**
-- **PR #109422**
-- **PR #109560**
-- **PR #109539**
-- **PR #101752** Related #88353. Thanks @zhangguiping-xydt and @100yenadmin.
-- **PR #109541**
-- **PR #96250** Related #96203. Thanks @xydt-tanshanshan and @roybelen.
-- **PR #95852** Related #95780. Thanks @yetval and @jpplaisted.
-- **PR #101826** Thanks @100yenadmin.
-- **PR #90779** Related #90296. Thanks @joelnishanth and @cursoragent and @jerrywang241220-create.
-- **PR #109586**
-- **PR #109418** Thanks @Patrick-Erichsen.
-- **PR #101748** Related #101172. Thanks @PollyBot13.
-- **PR #109510** Thanks @Patrick-Erichsen.
-- **PR #109614**
-- **PR #109605**
-- **PR #109596**
-- **PR #109548**
-- **PR #109557**
-- **PR #109587**
-- **PR #109575**
-- **PR #109441**
-- **PR #109433** Related #108781. Thanks @IWhatsskill.
-- **PR #106526** Related #104854. Thanks @ekinnee.
-- **PR #109485** Thanks @wahaha1223.
-- **PR #109592** Thanks @ZengWen-DT.
-- **PR #92011** Related #92271. Thanks @MertBasar0.
-- **PR #101265** Related #101204. Thanks @snowzlmbot.
-- **PR #109591** Thanks @ZengWen-DT.
-- **PR #97492** Related #97489. Thanks @LZY3538 and @shadow-enthusiast.
-- **PR #109625**
-- **PR #109631**
-- **PR #109589** Thanks @ZengWen-DT.
-- **PR #109629** Thanks @Patrick-Erichsen.
-- **PR #109590** Thanks @krissding.
-- **PR #109579** Related #86425. Thanks @shushushv.
-- **PR #109497**
-- **PR #109628**
-- **PR #69707** Thanks @badgerbees.
-- **PR #109363**
-- **PR #109362**
-- **PR #98422** Related #98419. Thanks @ooiuuii.
-- **PR #109612** Related #109405. Thanks @wuqxuan and @NOVA-Openclaw.
-- **PR #108924** Related #108656. Thanks @obviyus.
-- **PR #109610** Thanks @zhangguiping-xydt.
-- **PR #109635**
-- **PR #109630**
-- **PR #109361**
-- **PR #109640**
-- **PR #109648**
-- **PR #109593**
-- **PR #109519** Thanks @Monkey-wusky.
-- **PR #109464** Thanks @wahaha1223.
-- **PR #109627** Related #101148. Thanks @100yenadmin.
-- **PR #109403** Thanks @ekinnee.
-- **PR #70737** Related #67397, #68972, #69811. Thanks @Patrick-Erichsen and @ekinnee and @MSCHKY and @raydoomed and @akessel56.
-- **PR #109636**
-- **PR #109442** Thanks @wahaha1223.
-- **PR #109386**
-- **PR #109633**
-- **PR #109540** Thanks @ZengWen-DT.
-- **PR #109655** Thanks @NianJiuZst.
-- **PR #109585**
-- **PR #109653**
-- **PR #109140**
-- **PR #109663**
-- **PR #109233** Thanks @yetval.
-- **PR #97233** Thanks @marchpure.
-- **PR #109008** Thanks @YangManBOBO.
-- **PR #109576** Thanks @LZY3538.
-- **PR #109494** Thanks @Alix-007.
-- **PR #109477** Thanks @Leon-SK668.
-- **PR #109671**
-- **PR #109665**
-- **PR #109660**
-- **PR #109624**
-- **PR #109666**
-- **PR #109468** Thanks @Leon-SK668.
-- **PR #108985** Related #108466. Thanks @aspalagin and @consoleaf.
-- **PR #109686**
-- **PR #109168** Thanks @qingminglong.
-- **PR #109394** Thanks @Pick-cat.
-- **PR #109508** Thanks @Monkey-wusky.
-- **PR #109689**
-- **PR #109651**
-- **PR #109696**
-- **PR #109683**
-- **PR #109237** Thanks @yetval.
-- **PR #108969** Related #108968. Thanks @masatohoshino.
-- **PR #108502** Related #108501. Thanks @masatohoshino.
-- **PR #109615**
-- **PR #109706**
-- **PR #109525** Thanks @Monkey-wusky.
-- **PR #109089** Thanks @xydigit-zt.
-- **PR #109476** Thanks @mushuiyu886.
-- **PR #77158** Thanks @zeroaltitude.
-- **PR #109695**
-- **PR #109714**
-- **PR #109685**
-- **PR #109417** Thanks @ZengWen-DT and @wahaha1223.
-- **PR #109687**
-- **PR #109694**
-- **PR #109688**
-- **PR #109722**
-- **PR #109719** Thanks @shushushv.
-- **PR #109715**
-- **PR #90610** Thanks @ooiuuii.
-- **PR #89491** Related #81865. Thanks @abnershang.
-- **PR #109676** Related #109352. Thanks @ZengWen-DT and @andrea-kingautomation.
-- **PR #45315** Related #45314. Thanks @christopherwoodall.
-- **PR #109705**
-- **PR #109556**
-- **PR #109622**
-- **PR #109737**
-- **PR #109411** Related #108666.
-- **PR #109717**
-- **PR #109325** Thanks @Alix-007.
-- **PR #109739**
-- **PR #109749**
-- **PR #108967** Related #108774. Thanks @Yigtwxx and @xiayinjin-oss.
-- **PR #86900** Related #58838. Thanks @tanshanshan and @aaron-he-zhu.
-- **PR #109604** Thanks @wangmiao0668000666.
-- **PR #107999** Related #107998. Thanks @ooiuuii.
-- **PR #109757**
-- **PR #109762**
-- **PR #109724**
-- **PR #77213** Related #75814. Thanks @BunsDev and @kAIborg24.
-- **PR #109752**
-- **PR #109772**
-- **PR #109776**
-- **PR #68685** Related #68664. Thanks @Tmalone1250 and @Tam3000.
-- **PR #109764**
-- **PR #109716** Related #109316.
-- **PR #109769**
-- **PR #109720**
-- **PR #109681**
-- **PR #109780**
-- **PR #109790**
-- **PR #109740**
-- **PR #109677** Thanks @wangmiao0668000666.
-- **PR #109766**
-- **PR #109718** Thanks @ZengWen-DT and @cursoragent.
-- **PR #109801**
-- **PR #109701** Thanks @Monkey-wusky.
-- **PR #109778** Related #95560. Thanks @Footree.
-- **PR #109617** Thanks @wangmiao0668000666.
-- **PR #109710** Thanks @wangmiao0668000666.
-- **PR #109618** Thanks @wangmiao0668000666.
-- **PR #109818**
-- **PR #109609** Thanks @mushuiyu886.
-- **PR #109664** Thanks @ZengWen-DT.
-- **PR #109674** Thanks @ZengWen-DT.
-- **PR #109669** Thanks @qingminlong.
-- **PR #109721** Thanks @krissding.
-- **PR #109702** Thanks @krissding.
-- **PR #109773**
-- **PR #109708** Thanks @wangmiao0668000666.
-- **PR #109667** Thanks @ZengWen-DT and @cursoragent.
-- **PR #109698** Thanks @LZY3538.
-- **PR #109803**
-- **PR #109750** Thanks @zhangguiping-xydt.
-- **PR #109845**
-- **PR #109728** Thanks @Monkey-wusky.
-- **PR #109863**
-- **PR #109804**
-- **PR #109826**
-- **PR #93559** Related #92569. Thanks @zhanxingxin1998 and @StarbloomConsultingHub.
-- **PR #109755**
-- **PR #109731** Thanks @xydt-juyaohui.
-- **PR #109873**
-- **PR #109690** Thanks @DaigoSoup.
-- **PR #109892**
-- **PR #109877**
-- **PR #109894**
-- **PR #109899**
-- **PR #109725** Thanks @pgondhi987.
-- **PR #109887** Thanks @IWhatsskill.
-- **PR #109827**
-- **PR #109866**
-- **PR #109888**
-- **PR #109886** Related #76722. Thanks @xialonglee and @oscarhyc.
-- **PR #109895**
-- **PR #109799**
-- **PR #101472** Thanks @cxbAsDev.
-- **PR #109915**
-- **PR #109917**
-- **PR #109907**
-- **PR #109841**
-- **PR #98390** Related #98389. Thanks @ooiuuii.
-- **PR #95368** Thanks @zats.
-- **PR #109679**
-- **PR #109921**
-- **PR #109910**
-- **PR #109432** Thanks @mushuiyu886.
-- **PR #109580** Related #109299. Thanks @wuqxuan and @pacoa-kdbg.
-- **PR #89783** Thanks @GeekyMax and @heyumeng154-alt.
-- **PR #109819**
-- **PR #109926**
-- **PR #109925**
-- **PR #109929**
-- **PR #109916** Thanks @krissding.
-- **PR #109936**
-- **PR #109874**
-- **PR #95604** Thanks @kklouzal.
-- **PR #109934**
-- **PR #109844** Related #109842.
-- **PR #108136** Related #108133. Thanks @ooiuuii.
-- **PR #109919**
-- **PR #109901**
-- **PR #109791**
-- **PR #92340** Related #91677. Thanks @Ren1104.
-- **PR #109796**
-- **PR #109200** Thanks @IWhatsskill.
-- **PR #99079** Related #99078. Thanks @ooiuuii.
-- **PR #109964**
-- **PR #95838** Related #95811. Thanks @DinoMC.
-- **PR #109954**
-- **PR #109987**
-- **PR #109712**
-- **PR #109483** Thanks @IWhatsskill.
-- **PR #109876**
-- **PR #109905** Related #109893.
-- **PR #109668**
-- **PR #109709**
-- **PR #109999**
-- **PR #110000**
-- **PR #79882** Thanks @shebson.
-- **PR #109751**
-- **PR #110012**
-- **PR #110013**
-- **PR #109977**
-- **PR #109813**
-- **PR #110041**
-- **PR #96230** Thanks @zhangguiping-xydt and @hxy91819.
-- **PR #110042**
-- **PR #110030** Related #109838.
-- **PR #109995**
-- **PR #110019**
-- **PR #110062**
-- **PR #110029** Related #110018.
-- **PR #109966**
-- **PR #108675**
-- **PR #110076**
-- **PR #109805** Thanks @wangmiao0668000666.
-- **PR #109914** Thanks @IWhatsskill.
-- **PR #110078**
-- **PR #110014**
-- **PR #93833** Related #93781. Thanks @zhangguiping-xydt and @BSG2000.
-- **PR #109828** Thanks @Yigtwxx.
-- **PR #109810**
-- **PR #109682** Thanks @YangManBOBO.
-- **PR #109947**
-- **PR #99287** Related #99269. Thanks @ooiuuii and @obviyus.
-- **PR #109743** Thanks @tzy-17 and @Patrick-Erichsen.
-- **PR #109952**
-- **PR #110054**
-- **PR #110088**
-- **PR #106942** Thanks @ZengWen-DT and @cursoragent.
-- **PR #110106**
-- **PR #110135**
-- **PR #104967** Thanks @qingminglong.
-- **PR #109399** Thanks @RomneyDa.
-- **PR #109564** Thanks @RomneyDa.
-- **PR #110100** Related #110070.
-- **PR #106365** Thanks @xialonglee.
-- **PR #110127**
-- **PR #109355** Related #108442. Thanks @jalehman and @wrytn.
-- **PR #110098**
-- **PR #110104**
-- **PR #108304** Thanks @amknight.
-- **PR #110121**
-- **PR #109811**
-- **PR #109809**
-- **PR #109808**
-- **PR #109922**
-- **PR #110117**
-- **PR #110177** Related #110150.
-- **PR #110161**
-- **PR #110133**
-- **PR #110116**
-- **PR #110169**
-- **PR #110193** Related #110025. Thanks @joshavant and @headbouyJB.
-- **PR #110158**
-- **PR #110094**
-- **PR #110111**
-- **PR #110170** Thanks @zhangguiping-xydt.
-- **PR #110096** Thanks @abnershang.
-- **PR #108453** Related #108421. Thanks @smoe.
-- **PR #110191** Related #110152. Thanks @jalehman and @MasterBailey1.
-- **PR #109742** Thanks @tzy-17 and @Patrick-Erichsen.
-- **PR #110141**
-- **PR #110089**
-- **PR #110105**
-- **PR #109837**
-- **PR #110159**
-- **PR #110205**
-- **PR #110090**
-- **PR #110107**
-- **PR #110173**
-- **PR #110092**
-- **PR #109857** Related #109300. Thanks @Leon-SK668 and @pacoa-kdbg.
-- **PR #110083** Related #109832. Thanks @wangyan2026 and @jalehman and @jonasserry.
-- **PR #110081**
-- **PR #110118**
-- **PR #110211**
-- **PR #110218**
-- **PR #110130** Thanks @IWhatsskill.
-- **PR #110220** Related #110209.
-- **PR #109913** Thanks @chengzhichao-xydt.
-- **PR #109291** Thanks @RomneyDa.
-- **PR #105108** Thanks @qingminglong.
-- **PR #103513** Thanks @mikasa0818.
-- **PR #110228**
-- **PR #105013** Thanks @qingminglong.
-- **PR #110226**
-- **PR #105903** Related #105694. Thanks @wm0018 and @aniruddhaadak80.
-- **PR #109869** Thanks @mushuiyu886.
-- **PR #110200** Thanks @VACInc.
-- **PR #109741** Thanks @tzy-17 and @Patrick-Erichsen.
-- **PR #110196**
-- **PR #110233** Thanks @VACInc.
-- **PR #107046** Thanks @lzw112.
-- **PR #110238**
-- **PR #109350** Thanks @RomneyDa.
-- **PR #109282** Thanks @RomneyDa.
-- **PR #105477** Thanks @wings1029.
-- **PR #104935** Thanks @VectorPeak.
-- **PR #110172**
-- **PR #110246**
-- **PR #110241** Related #109191. Thanks @Patrick-Erichsen and @Johannes-Berggren.
-- **PR #103512** Thanks @mikasa0818.
-- **PR #110174**
-- **PR #110245**
-- **PR #110095**
-- **PR #109870** Thanks @zhangguiping-xydt.
-- **PR #109817** Thanks @anagnorisis2peripeteia.
-- **PR #110215**
-- **PR #110252**
-- **PR #110183**
-- **PR #98541** Thanks @zenglingbiao.
-- **PR #98543** Thanks @zenglingbiao.
-- **PR #98546** Thanks @zenglingbiao.
-- **PR #108883** Thanks @zenglingbiao.
-- **PR #105633** Thanks @HermanZeng.
-- **PR #110242**
-- **PR #110255**
-- **PR #109955** Related #109941. Thanks @DaigoSoup and @jalehman and @thomaswillner.
-- **PR #98802** Thanks @zenglingbiao.
-- **PR #98667** Thanks @zenglingbiao.
-- **PR #98801** Thanks @zenglingbiao.
-- **PR #98795** Thanks @zenglingbiao.
-- **PR #98797** Thanks @zenglingbiao.
-- **PR #98670** Thanks @zenglingbiao.
-- **PR #98668** Thanks @zenglingbiao.
-- **PR #106386** Thanks @wangmiao0668000666.
-- **PR #110272**
-- **PR #109173** Thanks @wanyongstar.
-- **PR #108940** Thanks @zhangguiping-xydt and @wanyongstar.
-- **PR #109174** Thanks @wanyongstar.
-- **PR #110027** Thanks @wanyongstar.
-- **PR #110026** Thanks @wanyongstar.
-- **PR #104209** Thanks @masatohoshino.
-- **PR #110275**
-- **PR #103518** Thanks @maweibin.
-- **PR #110274**
-- **PR #110264** Thanks @Patrick-Erichsen.
-- **PR #109903** Thanks @ZengWen-DT and @cursoragent.
-- **PR #103855** Thanks @Leon-SK668 and @Alix-007.
-- **PR #110273** Thanks @Patrick-Erichsen.
-- **PR #110268**
-- **PR #110283**
-- **PR #110289**
-- **PR #106454** Thanks @ZOOWH.
-- **PR #110288**
-- **PR #110221**
-- **PR #110291**
-- **PR #110290**
-- **PR #101998** Related #101988. Thanks @LiLan0125 and @NianJiuZst and @hfgwq2dgx8-tech.
-- **PR #98480** Thanks @sheyanmin.
-- **PR #109794** Thanks @ZengWen-DT and @cursoragent.
-- **PR #110267**
-- **PR #110287**
-- **PR #106420** Thanks @ZOOWH.
-- **PR #110207** Thanks @VACInc.
-- **PR #105297** Thanks @mushuiyu886.
-- **PR #106027** Related #106005. Thanks @morluto.
-- **PR #110259**
-- **PR #110248**
-- **PR #110167**
-- **PR #110311**
-- **PR #110310** Related #110306.
-- **PR #104851** Thanks @zhangguiping-xydt.
-- **PR #110254**
-- **PR #110298**
-- **PR #110223**
-- **PR #110312**
-- **PR #110269**
-- **PR #110314** Thanks @IWhatsskill.
-- **PR #110034** Related #110033. Thanks @masatohoshino.
-- **PR #110316**
-- **PR #110308**
-- **PR #110327**
-- **PR #110285**
-- **PR #110335** Related #110322.
-- **PR #110317**
-- **PR #110295**
-- **PR #110239** Thanks @VACInc.
-- **PR #110225**
-- **PR #110276**
-- **PR #110332**
-- **PR #110341**
-- **PR #110353**
-- **PR #110351** Related #102236. Thanks @yetval.
-- **PR #110361**
-- **PR #110326**
-- **PR #110227**
-- **PR #110381** Related #96815. Thanks @xxw77.
-- **PR #109621** Thanks @zhangguiping-xydt.
-- **PR #109861** Related #109851. Thanks @fuller-stack-dev.
-- **PR #109230** Thanks @zhangguiping-xydt.
-- **PR #110357**
-- **PR #110271**
-- **PR #110409**
-- **PR #108909** Thanks @zhangguiping-xydt.
-- **PR #110366** Related #108976. Thanks @virtt.
-- **PR #110406**
-- **PR #109800** Thanks @Pick-cat.
-- **PR #110417**
-- **PR #110279** Thanks @wanyongstar.
-- **PR #110281** Thanks @wanyongstar.
-- **PR #110413**
-- **PR #110418** Thanks @obviyus.
-- **PR #110426** Thanks @fuller-stack-dev.
-- **PR #110315** Thanks @IWhatsskill.
-- **PR #110364**
-- **PR #110369** Related #110340.
-- **PR #110391** Related #110354.
-- **PR #109807** Thanks @fuller-stack-dev.
-- **PR #110396**
-- **PR #110395**
-- **PR #110375**
-- **PR #110360** Related #110320.
-- **PR #108569** Related #108550. Thanks @tzy-17 and @moguangyu5-design.
-- **PR #110365**
-- **PR #110028** Thanks @wanyongstar.
-- **PR #110282** Thanks @wanyongstar.
-- **PR #101453** Thanks @xialonglee.
-- **PR #110422** Related #110420. Thanks @shakkernerd.
-- **PR #110424**
-- **PR #110386**
-- **PR #110213** Related #110137. Thanks @MatthewSynthia and @tailzaarapp.
-- **PR #110389**
-- **PR #110446**
-- **PR #105874** Thanks @xialonglee.
-- **PR #110358** Related #110343.
-- **PR #110448**
-- **PR #106081** Thanks @tzy-17.
-- **PR #106181** Thanks @xialonglee.
-- **PR #110428**
-- **PR #106241** Related #106136. Thanks @xialonglee and @iamtornado.
-- **PR #108925** Thanks @DaigoSoup and @jalehman.
-- **PR #110085** Thanks @mushuiyu886.
-- **PR #109927** Thanks @zhangguiping-xydt.
-- **PR #110449**
-- **PR #110305** Thanks @zhangguiping-xydt.
-- **PR #110339**
-- **PR #110323**
-- **PR #110445**
-- **PR #109210** Thanks @Pick-cat.
-- **PR #110456**
-- **PR #105163** Thanks @dwc1997.
-- **PR #110091**
-- **PR #110459**
-- **PR #110403** Thanks @zhangguiping-xydt.
-- **PR #89864** Related #87303. Thanks @dwc1997 and @singlesue88m-create.
-- **PR #110452**
-- **PR #110278** Thanks @zhangguiping-xydt.
-- **PR #110453**
-- **PR #110447** Related #110439. Thanks @shakkernerd.
-- **PR #104340** Thanks @xialonglee.
-- **PR #110461**
-- **PR #110462**
-- **PR #98567** Thanks @dwc1997.
-- **PR #110454**
-- **PR #98663** Thanks @dwc1997.
-- **PR #109652** Thanks @zhangguiping-xydt.
-- **PR #110460** Related #110247.
-- **PR #98569** Thanks @dwc1997.
-- **PR #110006** Thanks @mushuiyu886.
-- **PR #109440** Thanks @harjothkhara.
-- **PR #110330** Thanks @mushuiyu886.
-- **PR #110470**
-- **PR #110371**
-- **PR #107984** Related #107981. Thanks @ceckert.
-- **PR #110469**
-- **PR #110484**
-- **PR #110486**
-- **PR #109111** Thanks @Pick-cat.
-- **PR #110481** Related #110473.
-- **PR #110479**
-- **PR #110007** Thanks @mushuiyu886.
-- **PR #110474**
-- **PR #110478** Thanks @Pick-cat.
-- **PR #110496**
-- **PR #110487**
-- **PR #110472**
-- **PR #109878** Thanks @mushuiyu886.
-- **PR #108310** Thanks @Pick-cat.
-- **PR #110494**
-- **PR #110509**
-- **PR #110476**
-- **PR #110363**
-- **PR #100140** Related #99611. Thanks @davemorin and @vincentkoc.
-- **PR #110508**
-- **PR #107942** Related #107941. Thanks @moguangyu5-design.
-- **PR #110517**
-- **PR #110497**
-- **PR #109185** Thanks @Pick-cat.
-- **PR #110331**
-- **PR #110520** Thanks @Pick-cat.
-- **PR #110524**
-- **PR #110372**
-- **PR #110523**
-- **PR #110530**
-- **PR #110463** Thanks @wanyongstar.
-- **PR #110525** Thanks @fuller-stack-dev.
-- **PR #109822**
-- **PR #110522**
-- **PR #110477**
-- **PR #110518** Related #109443. Thanks @joshavant and @flashosophy.
-- **PR #110468**
-- **PR #110548** Thanks @zhangguiping-xydt.
-- **PR #110505** Related #110503.
-- **PR #110528** Thanks @wanyongstar.
-- **PR #110493**
-- **PR #110122** Thanks @zhangguiping-xydt.
-- **PR #110502** Thanks @VectorPeak.
-- **PR #110532**
-- **PR #110557**
-- **PR #107752** Thanks @danseerintel.
-- **PR #110549**
-- **PR #109176** Thanks @wanyongstar.
-- **PR #109247** Thanks @NianJiuZst.
-- **PR #110556**
-- **PR #109486** Thanks @Leon-SK668.
-- **PR #106163** Thanks @xialonglee.
-- **PR #109982** Thanks @Alix-007.
-- **PR #110533**
-- **PR #110292** Thanks @shaoohh.
-- **PR #109968** Thanks @Alix-007.
-- **PR #110380**
-- **PR #99312** Related #99311. Thanks @ceckert.
-- **PR #109501** Thanks @Alix-007.
-- **PR #110540**
-- **PR #110566**
-- **PR #109428** Thanks @Alix-007.
-- **PR #109114** Thanks @Alix-007.
-- **PR #109037** Thanks @Alix-007.
-- **PR #110543**
-- **PR #108970** Thanks @zhangguiping-xydt.
-- **PR #110574**
-- **PR #110550**
-- **PR #110563**
-- **PR #101773** Thanks @cxbAsDev.
-- **PR #110491**
-- **PR #107990** Thanks @cxbAsDev.
-- **PR #101775** Thanks @cxbAsDev.
-- **PR #106532** Thanks @cxbAsDev.
-- **PR #110466**
-- **PR #110541** Thanks @totobusnello.
-- **PR #110551** Thanks @tzy-17 and @Patrick-Erichsen.
-- **PR #105910** Thanks @xialonglee.
-- **PR #110585**
-- **PR #105863** Thanks @xialonglee.
-- **PR #110534**
-- **PR #110596**
-- **PR #101774** Thanks @cxbAsDev.
-- **PR #110277** Thanks @zhangguiping-xydt.
-- **PR #110587** Related #110586.
-- **PR #110010** Thanks @xydigit-zt.
-- **PR #110552** Thanks @tzy-17 and @Patrick-Erichsen.
-- **PR #100229** Related #100162. Thanks @zhangguiping-xydt and @rich533.
-- **PR #103786** Thanks @xialonglee.
-- **PR #108116** Thanks @chengzhichao-xydt.
-- **PR #110589**
-- **PR #110554** Thanks @tzy-17 and @Patrick-Erichsen.
-- **PR #109463** Thanks @zenglingbiao.
-- **PR #110416**
-- **PR #110607** Related #110606.
-- **PR #110609**
-- **PR #110567**
-- **PR #110595**
-- **PR #110610**
-- **PR #110583**
-- **PR #106073** Thanks @snowzlmbot.
-- **PR #110069** Thanks @mushuiyu886.
-- **PR #110405** Thanks @mushuiyu886.
-- **PR #110614**
-- **PR #110629**
-- **PR #107670** Related #104294.
-- **PR #107086**
-- **PR #107200** Related #107183.
-- **PR #106355** Related #106145.
-- **PR #107081** Related #107080.
-- **PR #107193**
-- **PR #107288** Related #107246. Thanks @obviyus.
-- **PR #107422** Related #103309. Thanks @arduano.
-- **PR #107403** Related #104984. Thanks @obviyus and @yetval.
-- **PR #106490** Related #81961. Thanks @alexandre-leng.
-- **PR #106469**
-- **PR #107358** Thanks @fuller-stack-dev.
-- **PR #107339** Related #107322. Thanks @obviyus.
-- **PR #106792** Related #106112. Thanks @joshavant and @charliemeyer2000.
-- **PR #107236** Thanks @SL4N.
-- **PR #106533**
-- **PR #106891**
-- **PR #106862**
-- **PR #105866**
-- **PR #100174** Related #100169. Thanks @souvikDevloper and @Souvikalp and @jwest75674.
-- **PR #102197** Thanks @jesse-merhi.
-- **PR #106332**
-- **PR #106941** Related #106913.
-- **PR #106927**
-- **PR #105833** Related #105529.
-- **PR #105810** Thanks @fuller-stack-dev.
-- **PR #106224** Related #106213.
-- **PR #106392**
-- **PR #106406** Related #106215.
-- **PR #106359** Related #106229. Thanks @obviyus.
-- **PR #107004** Related #106882.
-- **PR #106500**
-- **PR #106766** Related #106182.
-- **PR #107297**
-- **PR #106835**
-- **PR #106026** Related #105872.
-- **PR #104580** Thanks @hugenshen.
-- **PR #104585** Thanks @hugenshen.
-- **PR #106515** Related #106512. Thanks @edenfunf.
-- **PR #105553** Thanks @hugenshen.
-- **PR #105549** Thanks @hugenshen.
-- **PR #107230** Related #107225. Thanks @edenfunf.
-- **PR #107367** Related #107363. Thanks @edenfunf.
-- **PR #107813** Thanks @wuqxuan.
-- **PR #105334** Thanks @dwc1997.
-- **PR #93198** Related #80933. Thanks @mushuiyu886 and @gorkem2020.
-- **PR #106412** Thanks @zenglingbiao.
-- **PR #106385** Thanks @zenglingbiao and @wendy-chsy.
-- **PR #94130** Related #78145. Thanks @zhangguiping-xydt and @tdrose01.
-- **PR #101496** Thanks @xialonglee.
-- **PR #105258** Related #102250. Thanks @destire-mio and @yetval.
-- **PR #105520** Related #105511. Thanks @edenfunf.
-- **PR #105475** Thanks @qingminlong.
-- **PR #105479** Thanks @qingminlong.
-- **PR #103413** Thanks @wings1029.
-- **PR #81778** Related #81751. Thanks @liaoandi.
-- **PR #100377** Thanks @xialonglee.
-- **PR #102860** Thanks @Alix-007 and @Leon-SK668.
-- **PR #103407** Thanks @NianJiuZst.
-- **PR #103453** Related #103364. Thanks @lin-hongkuan and @harjothkhara.
-- **PR #97828** Related #80862. Thanks @ly-wang19 and @kyle20026.
-- **PR #102804** Thanks @sunlit-deng.
-- **PR #102897** Thanks @maweibin.
-- **PR #103713** Thanks @qingminglong.
-- **PR #102373** Thanks @clawSean.
-- **PR #103142** Thanks @masatohoshino.
-- **PR #103425** Thanks @qingminglong.
-- **PR #103907** Thanks @soldforaloss.
-- **PR #102026** Thanks @Alix-007.
-- **PR #102892** Related #97602. Thanks @LZY3538 and @mtuwei.
-- **PR #88953** Thanks @yetval.
-- **PR #103415** Related #103366. Thanks @lin-hongkuan and @harjothkhara.
-- **PR #103329** Related #103311. Thanks @krissding.
-- **PR #103433** Thanks @qingminglong.
-- **PR #98124** Related #97994. Thanks @SunnyShu0925 and @wszhhx.
-- **PR #103247**
-- **PR #103233** Related #80435. Thanks @kewang-pika and @nonplace.
-- **PR #103066** Thanks @NianJiuZst.
-- **PR #96841** Related #96564. Thanks @bradreaves.
-- **PR #102625** Thanks @zhangguiping-xydt.
-- **PR #102626** Thanks @wings1029.
-- **PR #102627** Thanks @wangyan2026.
-- **PR #102816** Thanks @MoerAI.
-- **PR #102823** Thanks @Pandah97 and @SunnyShu0925 and @zhangqueping and @zw-xysk and @cxbAsDev and @lzyyzznl.
-- **PR #102833** Thanks @LeonidasLux.
-- **PR #102877** Thanks @zhangguiping-xydt.
-- **PR #102949** Thanks @mushuiyu886.
-- **PR #102963** Thanks @mushuiyu886.
-- **PR #102969** Thanks @mushuiyu886.
-- **PR #102988** Thanks @ly85206559.
-- **PR #103010** Related #103001.
-- **PR #103034** Thanks @Simon-XYDT.
-- **PR #103210** Thanks @lsr911.
-- **PR #103341** Thanks @zhangguiping-xydt.
-- **PR #103487** Thanks @mushuiyu886.
-- **PR #103543** Thanks @MoerAI.
-- **PR #103580** Thanks @zhangguiping-xydt.
-- **PR #103646** Thanks @mushuiyu886.
-- **PR #103616** Thanks @mushuiyu886.
-- **PR #102819** Thanks @Kevin23-design and @vincentkoc.
-- **PR #88426** Thanks @abel-zer0.
-- **PR #55596** Related #55512. Thanks @sparkyrider and @zjy282.
-- **PR #102119** Related #101979. Thanks @Bartok9 and @xuzhi5858.
-- **PR #102227** Thanks @hugenshen.
-- **PR #102382** Related #102320. Thanks @LiLan0125 and @yetval.
-- **PR #97858** Related #97048. Thanks @ly-wang19 and @zackchiutw.
-- **PR #87393** Related #87384. Thanks @kesslerio.
-- **PR #105301** Thanks @hugenshen.
-- **PR #87449** Related #87322. Thanks @yetval and @Senseonics-AI.
-- **PR #104256** Related #103684. Thanks @NianJiuZst and @BenjaminBrossi.
-- **PR #105347** Thanks @jesse-merhi.
-- **PR #104624** Thanks @hugenshen.
-- **PR #108360** Related #107449. Thanks @lee-xydt and @Patt92.
-- **PR #107214**
-- **PR #107361** Related #107335.
-- **PR #107410** Related #107406.
-- **PR #107419**
-- **PR #107348**
-- **PR #107458**
-- **PR #107477**
-- **PR #107577** Related #107216.
-- **PR #107349** Related #107313.
-- **PR #107386** Thanks @hugenshen.
-- **PR #107409** Related #22676. Thanks @ZHOUKAILIAN and @UberKitten.
-- **PR #107365** Thanks @ly-wang19.
-- **PR #106004** Related #105936. Thanks @yangxiansheng and @joshavant and @yetval.
-- **PR #106116** Related #103059. Thanks @ruel225 and @yetval.
-- **PR #107025**
-- **PR #107474** Thanks @lonexreb.
-- **PR #105448** Related #105447. Thanks @VectorPeak and @altaywtf.
-- **PR #106736**
-- **PR #106754**
-- **PR #106347** Related #106310. Thanks @obviyus.
-- **PR #106418**
-- **PR #107174** Thanks @fuller-stack-dev.
-- **PR #106899** Related #106838. Thanks @bek91.
-- **PR #106294** Related #106259.
-- **PR #106513** Related #103363. Thanks @jincheng-xydt and @harjothkhara.
-- **PR #107188** Thanks @joshavant.
-- **PR #107263** Thanks @wahaha1223.
-- **PR #107243** Related #107133. Thanks @felirami and @Tony-ooo.
-- **PR #105916** Thanks @qingminlong.
-- **PR #106479** Related #105530. Thanks @ml12580 and @mnowrot.
-- **PR #107144** Thanks @SunnyShu0925.
-- **PR #107143** Thanks @SunnyShu0925.
-- **PR #107690** Thanks @shakkernerd.
-- **PR #106178** Thanks @QiuYuang and @Monkey-wusky and @maweibin.
-- **PR #106643** Thanks @zw-xysk.
-- **PR #107103** Thanks @zw-xysk.
-- **PR #105883** Thanks @Alix-007.
-- **PR #107360** Thanks @Alix-007.
-- **PR #106796**
-- **PR #105775** Thanks @jjjhenriksen.
-- **PR #106889** Related #106877.
-- **PR #106318** Related #106261.
-- **PR #106069** Related #106014. Thanks @krissding and @jalfaro2876.
-- **PR #107258** Thanks @pgondhi987.
-- **PR #107271**
-- **PR #106806** Related #103056. Thanks @yetval.
-- **PR #107637**
-- **PR #107705**
-- **PR #107711**
-- **PR #106258** Related #106249. Thanks @moguangyu5-design.
-- **PR #100361** Thanks @giodl73-repo.
-- **PR #102316** Related #102312.
-- **PR #102331** Thanks @steipete-oai.
-- **PR #99221** Related #102219. Thanks @tobiasoort and @giodl73-repo.
-- **PR #99065** Related #77922. Thanks @jacobtomlinson and @joshavant and @Mcamin.
-- **PR #98299** Thanks @giodl73-repo and @Patrick-Erichsen.
-- **PR #101754** Thanks @wings1029.
-- **PR #101630** Thanks @hugenshen and @cursoragent.
-- **PR #101736** Thanks @chengzhichao-xydt and @Alix-007.
-- **PR #102377** Thanks @Patrick-Erichsen.
-- **PR #101617** Thanks @zhangguiping-xydt.
-- **PR #102246** Thanks @mushuiyu886.
-- **PR #98316** Thanks @giodl73-repo and @Patrick-Erichsen.
-- **PR #101375** Related #101286. Thanks @fengjikui and @redasadki.
-- **PR #102332** Thanks @QiuYuang.
-- **PR #102066** Thanks @mushuiyu886.
-- **PR #101815** Thanks @VectorPeak.
-- **PR #102225** Thanks @zw-xysk.
-- **PR #102090** Thanks @wm0018.
-- **PR #101976** Thanks @MoerAI.
-- **PR #102378** Thanks @zw-xysk.
-- **PR #102410** Thanks @steipete-oai.
-- **PR #92517** Thanks @davefano and @davefano-agents.
-- **PR #101946** Thanks @xydt-tanshanshan.
-- **PR #102420** Related #102388.
-- **PR #102085** Thanks @wm0018.
-- **PR #102105** Thanks @wangmiao0668000666.
-- **PR #102157** Thanks @wangmiao0668000666.
-- **PR #102395** Thanks @wangmiao0668000666.
-- **PR #102422** Related #102421.
-- **PR #102266** Thanks @zw-xysk.
-- **PR #101781** Thanks @hugenshen and @cursoragent.
-- **PR #101934** Thanks @wm0018.
-- **PR #88082** Thanks @lit26.
-- **PR #102455**
-- **PR #102448**
-- **PR #102414** Thanks @zhangguiping-xydt.
-- **PR #102407** Thanks @miorbnli.
-- **PR #102438** Related #102430. Thanks @obviyus.
-- **PR #102461**
-- **PR #102463**
-- **PR #102450** Thanks @qingminglong.
-- **PR #102372** Related #102371. Thanks @kevinlin-openai and @kevinslin.
-- **PR #102476**
-- **PR #102466** Thanks @chengzhichao-xydt.
-- **PR #102464** Thanks @lsr911.
-- **PR #102467** Thanks @lsr911.
-- **PR #102470** Thanks @zw-xysk and @Monkey-wusky.
-- **PR #102465**
-- **PR #102442** Thanks @ly85206559.
-- **PR #102489** Related #102460.
-- **PR #102492** Related #102446.
-- **PR #102491** Related #102453.
-- **PR #102483** Thanks @wings1029.
-- **PR #102497**
-- **PR #102478** Thanks @qingminglong.
-- **PR #101501**
-- **PR #101649** Thanks @Alix-007.
-- **PR #102493** Related #102472. Thanks @obviyus.
-- **PR #101506** Thanks @mikasa0818.
-- **PR #101838** Related #101835. Thanks @qingminglong.
-- **PR #102484** Thanks @wings1029.
-- **PR #102477** Thanks @xydt-tanshanshan.
-- **PR #101611** Thanks @fengjikui.
-- **PR #102496** Thanks @chengzhichao-xydt.
-- **PR #102526**
-- **PR #102518**
-- **PR #102511**
-- **PR #102523** Related #102517.
-- **PR #101853** Related #101810. Thanks @NianJiuZst and @aniruddhaadak80.
-- **PR #102125** Thanks @mushuiyu886.
-- **PR #102431** Thanks @miorbnli.
-- **PR #102500** Thanks @lsr911.
-- **PR #102531**
-- **PR #102451** Thanks @QiuYuang.
-- **PR #102509** Thanks @zhangguiping-xydt.
-- **PR #102512** Thanks @lsr911.
-- **PR #102513** Thanks @lsr911.
-- **PR #102515** Thanks @lsr911.
-- **PR #102525** Thanks @lsr911.
-- **PR #102527** Thanks @lsr911.
-- **PR #102536** Related #102528.
-- **PR #102522** Thanks @lsr911.
-- **PR #102516**
-- **PR #102149** Thanks @wangmiao0668000666.
-- **PR #102558**
-- **PR #102436** Thanks @qingminglong.
-- **PR #102309** Related #102308. Thanks @jmcte.
-- **PR #102276** Related #102252. Thanks @harjothkhara and @yetval.
-- **PR #102524** Thanks @lsr911.
-- **PR #102195** Thanks @qingminglong.
-- **PR #102389** Related #101837. Thanks @Supsumintong and @qingminglong.
-- **PR #102549** Related #102548.
-- **PR #101832** Related #101785. Thanks @MonkeyLeeT and @aniruddhaadak80.
-- **PR #102559** Related #102498.
-- **PR #102160** Related #85826, #96168. Thanks @obviyus and @kiagentkronos-cell and @alvelda.
-- **PR #102479** Related #102471. Thanks @obviyus.
-- **PR #101921** Thanks @realZachi.
-- **PR #102539** Thanks @lsr911.
-- **PR #102573** Related #102556.
-- **PR #101411** Thanks @jcooley8.
-- **PR #102542** Thanks @wings1029.
-- **PR #102560** Thanks @lsr911.
-- **PR #102564** Related #102540.
-- **PR #80656** Thanks @samuelalake and @BunsDev.
-- **PR #102565** Thanks @zhangguiping-xydt.
-- **PR #102104** Thanks @wangmiao0668000666.
-- **PR #102601** Related #102556, #102535.
-- **PR #102547** Thanks @lsr911.
-- **PR #102544** Thanks @maweibin.
-- **PR #102583** Thanks @lsr911.
-- **PR #102570** Thanks @lsr911.
-- **PR #102561** Thanks @lsr911.
-- **PR #102543** Thanks @qingminglong.
-- **PR #102576** Thanks @lsr911.
-- **PR #102590** Thanks @Pandah97.
-- **PR #102591** Thanks @Pandah97.
-- **PR #102347** Thanks @zw-xysk.
-- **PR #102639**
-- **PR #102563** Related #102545.
-- **PR #102551** Thanks @lsr911.
-- **PR #102567** Thanks @lsr911.
-- **PR #101744** Thanks @hugenshen and @cursoragent.
-- **PR #101739** Thanks @Alix-007.
-- **PR #102089** Thanks @Alix-007.
-- **PR #102641**
-- **PR #49436** Thanks @BunsDev.
-- **PR #102572** Thanks @lsr911.
-- **PR #102592** Thanks @Pandah97.
-- **PR #102161** Thanks @maweibin.
-- **PR #89255** Thanks @sallyom and @joshavant.
-- **PR #97105** Thanks @clawSean.
-- **PR #102661** Related #98038. Thanks @mabaty.
-- **PR #102660**
-- **PR #101423** Thanks @jcooley8.
-- **PR #102593** Thanks @Pandah97.
-- **PR #102443** Thanks @sunlit-deng.
-- **PR #102663**
-- **PR #102586** Related #102503. Thanks @steipete-oai.
-- **PR #102603** Thanks @Pandah97.
-- **PR #102604** Thanks @Pandah97.
-- **PR #102025** Thanks @Alix-007.
-- **PR #102605** Thanks @Pandah97.
-- **PR #102675**
-- **PR #102550** Thanks @qingminglong.
-- **PR #102051** Thanks @SunnyShu0925.
-- **PR #102481** Thanks @qingminglong.
-- **PR #50483** Thanks @eulicesl.
-- **PR #102413** Thanks @miorbnli.
-- **PR #102070** Related #102057. Thanks @qingminglong.
-- **PR #102328** Thanks @masatohoshino.
-- **PR #101911** Thanks @snowzlmbot.
-- **PR #102606** Thanks @Pandah97.
-- **PR #102403** Thanks @yetval.
-- **PR #102398** Thanks @yetval.
-- **PR #102348** Related #102251. Thanks @HOYALIM and @yetval.
-- **PR #102480** Thanks @sunlit-deng.
-- **PR #102608** Thanks @lzyyzznl.
-- **PR #102027** Thanks @Alix-007.
-- **PR #102664** Related #102654.
-- **PR #102704** Thanks @CG-Intelligence-Agent-Jack.
-- **PR #102677** Related #102642.
-- **PR #96994** Related #96639. Thanks @pengxuewu-lab and @MaBeitian.
-- **PR #102607** Thanks @Pandah97.
-- **PR #101856** Thanks @velanir-ai-manager.
-- **PR #102611** Thanks @lzyyzznl.
-- **PR #102714**
-- **PR #102633** Thanks @obviyus.
-- **PR #102643** Related #102598. Thanks @obviyus.
-- **PR #102494** Thanks @QiuYuang.
-- **PR #101840** Related #101790.
-- **PR #102688** Related #102673.
-- **PR #102582** Related #102566. Thanks @Gary-Jia-new and @syfvb.
-- **PR #102733** Related #99201. Thanks @sahilsatralkar.
-- **PR #102599** Thanks @wings1029.
-- **PR #102612** Thanks @lzyyzznl.
-- **PR #102616** Thanks @lzyyzznl.
-- **PR #102617** Thanks @lzyyzznl.
-- **PR #79438** Thanks @Countermarch.
-- **PR #101880** Related #101851.
-- **PR #102618** Thanks @lzyyzznl.
-- **PR #102621** Thanks @lzyyzznl.
-- **PR #38290** Related #46520. Thanks @brunowowk and @mosidevv.
-- **PR #102750**
-- **PR #101510** Thanks @mikasa0818.
-- **PR #102622** Thanks @lzyyzznl.
-- **PR #102748** Related #102706.
-- **PR #100118** Thanks @SunnyShu0925.
-- **PR #102760**
-- **PR #102743** Related #102579.
-- **PR #102778** Thanks @vincentkoc.
-- **PR #102764**
-- **PR #102634** Thanks @mushuiyu886.
-- **PR #102753** Thanks @masatohoshino.
-- **PR #102631** Thanks @maweibin.
-- **PR #102624** Thanks @lzyyzznl.
-- **PR #102793** Thanks @vincentkoc.
-- **PR #102759** Related #102757. Thanks @vincentkoc.
-- **PR #102028** Thanks @Alix-007.
-- **PR #102758**
-- **PR #102783**
-- **PR #102745** Related #102423. Thanks @steipete-oai.
-- **PR #102766** Related #102754.
-- **PR #102789**
-- **PR #102791** Related #102751.
-- **PR #102050** Thanks @Alix-007.
-- **PR #102786** Related #102756.
-- **PR #102777**
-- **PR #102809** Thanks @vincentkoc.
-- **PR #102814** Thanks @sunlit-deng.
-- **PR #102656** Thanks @Pandah97.
-- **PR #102795**
-- **PR #102817**
-- **PR #102418** Thanks @pgondhi987.
-- **PR #102842** Related #102841.
-- **PR #98582** Related #98283. Thanks @sforsethi.
-- **PR #102835** Related #102577.
-- **PR #102829**
-- **PR #102848** Related #102821. Thanks @steipete-oai.
-- **PR #102871**
-- **PR #102013** Thanks @masatohoshino.
-- **PR #102867** Thanks @wm0018.
-- **PR #102876** Thanks @snowzlmbot.
-- **PR #102776**
-- **PR #102147** Thanks @coolmanns.
-- **PR #102784** Related #102806.
-- **PR #102902**
-- **PR #102830** Related #102055. Thanks @ZengWen-DT and @qingminglong.
-- **PR #102810**
-- **PR #102825** Related #102393. Thanks @wangyan2026 and @yetval.
-- **PR #102855** Thanks @maweibin.
-- **PR #102856** Thanks @Alix-007.
-- **PR #102808** Related #102806.
-- **PR #102893** Related #102716.
-- **PR #102869**
-- **PR #102872** Thanks @Alix-007.
-- **PR #102905** Related #102457. Thanks @ZengWen-DT and @gorkem2020.
-- **PR #102416** Thanks @pgondhi987.
-- **PR #102942**
-- **PR #61396** Thanks @zeuming.
-- **PR #102944**
-- **PR #102658** Thanks @ZengWen-DT.
-- **PR #102426** Thanks @pgondhi987.
-- **PR #102952** Related #55365. Thanks @lidge-jun and @Mdx2025.
-- **PR #102946** Related #97027. Thanks @jamesachurchill.
-- **PR #102901** Related #102895.
-- **PR #95473** Thanks @kklouzal.
-- **PR #102899** Related #102691.
-- **PR #102968**
-- **PR #96537** Related #96490. Thanks @yangxiansheng and @riazrahaman.
-- **PR #96686** Related #96677. Thanks @openperf and @lujiaweichn.
-- **PR #97264** Thanks @tayoun.
-- **PR #96400** Thanks @lin-hongkuan.
-- **PR #102894** Related #102888. Thanks @vincentkoc.
-- **PR #102986** Thanks @vincentkoc.
-- **PR #96684** Thanks @wendy-chsy.
-- **PR #102996**
-- **PR #103006**
-- **PR #102998** Thanks @jalehman.
-- **PR #103016**
-- **PR #102685** Thanks @zhangqueping.
-- **PR #102803** Thanks @steipete-oai.
-- **PR #98338** Thanks @giodl73-repo and @Patrick-Erichsen.
-- **PR #103002** Thanks @vincentkoc.
-- **PR #98350** Thanks @giodl73-repo.
-- **PR #103064** Thanks @shakkernerd.
-- **PR #103030**
-- **PR #103082**
-- **PR #103073** Related #103063. Thanks @vincentkoc.
-- **PR #103085**
-- **PR #99242** Thanks @eleqtrizit.
-- **PR #102880** Related #102878.
-- **PR #103090** Related #103086.
-- **PR #103091**
-- **PR #103094**
-- **PR #103102**
-- **PR #103105**
-- **PR #103098**
-- **PR #103107**
-- **PR #94419** Related #94418. Thanks @oliver-mee.
-- **PR #101488** Thanks @mikasa0818.
-- **PR #103104**
-- **PR #102186** Thanks @VACInc.
-- **PR #102863** Thanks @Alix-007 and @Leon-SK668.
-- **PR #103099**
-- **PR #101643** Thanks @sunlit-deng.
-- **PR #102659** Thanks @ZengWen-DT.
-- **PR #101652** Thanks @Alix-007.
-- **PR #103114**
-- **PR #103109** Thanks @masatohoshino.
-- **PR #103097** Related #103092.
-- **PR #103123**
-- **PR #103110**
-- **PR #103093** Related #103079, #103080. Thanks @hoangsaga123.
-- **PR #103120**
-- **PR #103100** Thanks @ly-wang19.
-- **PR #102978** Thanks @qingminglong.
-- **PR #102307** Related #99912. Thanks @SunnyShu0925 and @tyukara.
-- **PR #103101** Thanks @lzw112.
-- **PR #103106** Thanks @lzw112.
-- **PR #101661** Thanks @Alix-007.
-- **PR #103129** Related #103128.
-- **PR #103122**
-- **PR #103111**
-- **PR #102813** Thanks @qingminglong.
-- **PR #103134**
-- **PR #103136** Thanks @qingminglong.
-- **PR #103127**
-- **PR #103140**
-- **PR #103130**
-- **PR #103138**
-- **PR #102947** Related #102934. Thanks @wm0018 and @aniruddhaadak80.
-- **PR #102840** Thanks @yetval.
-- **PR #103115** Thanks @Leon-SK668.
-- **PR #103033** Related #103021. Thanks @tzy-17 and @wings1029 and @daphne-barretto.
-- **PR #103151** Thanks @vincentkoc.
-- **PR #102889** Related #102875. Thanks @lin-hongkuan and @sercada.
-- **PR #102951** Thanks @aniruddhaadak80.
-- **PR #99266** Thanks @RomneyDa.
-- **PR #103119** Thanks @Leon-SK668.
-- **PR #103156** Thanks @vincentkoc.
-- **PR #102981** Related #102960. Thanks @NianJiuZst and @jgrandguillaume.
-- **PR #103152** Thanks @obviyus.
-- **PR #102866** Thanks @SunnyShu0925.
-- **PR #102424** Thanks @maweibin.
-- **PR #102999** Related #102910. Thanks @ZOOWH and @aniruddhaadak80.
-- **PR #103139**
-- **PR #103149**
-- **PR #103126** Related #103125.
-- **PR #103154**
-- **PR #103160**
-- **PR #103068** Thanks @NianJiuZst.
-- **PR #103158**
-- **PR #102939** Thanks @qingminglong.
-- **PR #103182** Related #103180.
-- **PR #103177**
-- **PR #103167**
-- **PR #103195** Related #103187. Thanks @vincentkoc.
-- **PR #103194** Related #102914. Thanks @MonkeyLeeT and @aniruddhaadak80.
-- **PR #103225** Related #103221.
-- **PR #90738** Related #89594. Thanks @colton-octaria and @clwilliams8 and @packwood and @cmc099.
-- **PR #103224** Related #103203.
-- **PR #103223** Related #103208.
-- **PR #103217** Thanks @vincentkoc.
-- **PR #103172**
-- **PR #103197** Related #103184.
-- **PR #103175**
-- **PR #103237**
-- **PR #101078** Related #99919. Thanks @xialonglee and @vatsal28.
-- **PR #102202** Related #101716. Thanks @Darren2030 and @aniruddhaadak80.
-- **PR #102445** Related #102235. Thanks @wuqxuan and @hakanbaysal and @yetval.
-- **PR #101023** Thanks @masatohoshino.
-- **PR #103253**
-- **PR #102953** Thanks @ZOOWH.
-- **PR #102409** Thanks @miorbnli.
-- **PR #102805** Related #102632. Thanks @obviyus.
-- **PR #102971** Related #102915. Thanks @ZOOWH and @aniruddhaadak80.
-- **PR #103264** Thanks @vincentkoc.
-- **PR #103259** Related #103257.
-- **PR #103204** Related #103189.
-- **PR #103243**
-- **PR #103260** Related #103242.
-- **PR #103280** Related #103277.
-- **PR #103241** Related #103192.
-- **PR #102987** Thanks @qingminglong.
-- **PR #103278** Thanks @krissding.
-- **PR #102635**
-- **PR #103293** Related #103270. Thanks @steipete-oai.
-- **PR #102993** Related #102908. Thanks @MonkeyLeeT and @aniruddhaadak80.
-- **PR #103268** Thanks @steipete-oai.
-- **PR #102997** Thanks @snowzlmbot.
-- **PR #103310**
-- **PR #103299** Related #103298.
-- **PR #103321** Related #103319.
-- **PR #103316** Related #103283.
-- **PR #102637** Related #102614.
-- **PR #103289** Related #99031. Thanks @odrobnik.
-- **PR #103328**
-- **PR #103252** Thanks @coolmanns.
-- **PR #103349** Related #63829, #81205, #103088. Thanks @SunnyShu0925 and @fclwtt and @cuihaijun and @yetval.
-- **PR #103351** Thanks @NianJiuZst.
-- **PR #103338** Related #103333.
-- **PR #97629** Related #97621. Thanks @krissding and @Marvinthebored.
-- **PR #103343** Thanks @bradreaves.
-- **PR #103357**
-- **PR #103096** Related #103013. Thanks @sahilsatralkar.
-- **PR #103353** Related #103317.
-- **PR #103345** Related #103320.
-- **PR #103327**
-- **PR #103384** Related #103360.
-- **PR #103372** Related #103347.
-- **PR #103071** Thanks @zhangguiping-xydt.
-- **PR #103326** Related #103318.
-- **PR #98111** Related #93203. Thanks @iloveleon19 and @leonthe8th.
-- **PR #103255** Thanks @mikasa0818.
-- **PR #103399** Related #103392.
-- **PR #103258** Thanks @mikasa0818.
-- **PR #103266** Thanks @mikasa0818.
-- **PR #103274** Thanks @lsr911.
-- **PR #103404** Related #98290. Thanks @skoya.
-- **PR #103275** Thanks @saju01.
-- **PR #103411**
-- **PR #103406** Related #103403.
-- **PR #76364** Related #76352. Thanks @neilofneils404 and @RayWoo.
-- **PR #103419** Related #103388.
-- **PR #103416** Related #103368. Thanks @steipete-oai.
-- **PR #103214** Related #102800. Thanks @tzy-17 and @saltescapes.
-- **PR #102169** Thanks @maweibin.
-- **PR #103005** Related #102936. Thanks @LZY3538 and @aniruddhaadak80.
-- **PR #103272** Thanks @lsr911.
-- **PR #101696** Thanks @sunlit-deng.
-- **PR #103430** Related #103427.
-- **PR #103340** Related #103315.
-- **PR #103075** Thanks @pgondhi987.
-- **PR #103422** Related #103335.
-- **PR #103410** Thanks @VectorPeak.
-- **PR #103438** Related #103334.
-- **PR #103284** Related #103246. Thanks @tzy-17 and @yetval.
-- **PR #103344**
-- **PR #102925** Thanks @Pick-cat.
-- **PR #103396** Related #103053. Thanks @obviyus and @yetval.
-- **PR #103337**
-- **PR #102884** Thanks @chengzhichao-xydt.
-- **PR #103446** Related #103389.
-- **PR #103441** Related #68691. Thanks @hobo-l-20230331 and @aaajiao.
-- **PR #103450** Thanks @masatohoshino.
-- **PR #101740** Thanks @hugenshen.
-- **PR #103352**
-- **PR #103218** Related #100944. Thanks @cxbAsDev and @boxeeboiler.
-- **PR #103426** Related #103420.
-- **PR #103469**
-- **PR #103220** Related #102933. Thanks @wuqxuan and @aniruddhaadak80.
-- **PR #103470** Related #103250. Thanks @solavrc.
-- **PR #103484** Thanks @steipete-oai.
-- **PR #103074** Thanks @pgondhi987.
-- **PR #103488** Related #103454.
-- **PR #103393** Related #103378.
-- **PR #103478**
-- **PR #103493**
-- **PR #103117** Thanks @Leon-SK668.
-- **PR #102305** Related #102269. Thanks @SunnyShu0925 and @615Works.
-- **PR #103457** Related #103427.
-- **PR #103502** Related #103053. Thanks @yetval.
-- **PR #103359**
-- **PR #103486** Related #103480.
-- **PR #103504** Related #103451. Thanks @vincentkoc.
-- **PR #97926** Related #97925. Thanks @rvdlaar.
-- **PR #103501** Related #103489.
-- **PR #103471**
-- **PR #103510** Related #103324. Thanks @obviyus.
-- **PR #103508** Related #103500.
-- **PR #103528** Related #103335.
-- **PR #103476** Related #103462.
-- **PR #103412**
-- **PR #103463** Related #103461.
-- **PR #99536** Related #85714. Thanks @100yenadmin and @richardmqq.
-- **PR #103561** Related #103544.
-- **PR #99578** Related #99465. Thanks @100yenadmin.
-- **PR #101765** Thanks @mmaps and @pgondhi987.
-- **PR #103069** Thanks @NianJiuZst.
-- **PR #103563**
-- **PR #101854** Thanks @mmaps and @pgondhi987.
-- **PR #103576** Related #103575.
-- **PR #103536** Related #103533.
-- **PR #103178** Thanks @Pick-cat.
-- **PR #103585** Thanks @ZOOWH.
-- **PR #102507** Related #102267. Thanks @gorkem2020.
-- **PR #103330** Thanks @joshavant.
-- **PR #103593** Related #103574. Thanks @obviyus.
-- **PR #102811** Related #102676. Thanks @ObliviateRickLin and @gorkem2020.
-- **PR #103573**
-- **PR #87590** Related #87588. Thanks @bladin and @obviyus and @AnnieJun.
-- **PR #94517** Related #13870. Thanks @bladin and @obviyus and @koome23.
-- **PR #103595** Related #103517.
-- **PR #103609** Related #103588.
-- **PR #103601**
-- **PR #103617** Related #103610.
-- **PR #103612** Related #103602.
-- **PR #103525** Related #103507.
-- **PR #103514** Related #103499.
-- **PR #103625** Related #103570.
-- **PR #103466** Related #103452.
-- **PR #103448** Related #103444.
-- **PR #103481** Related #103477.
-- **PR #103313** Related #103202.
-- **PR #103176** Related #103135.
-- **PR #103464** Related #103459, #103460.
-- **PR #103651** Related #103081. Thanks @jzmudzinski.
-- **PR #103644**
-- **PR #103439** Related #103435.
-- **PR #103656** Related #103655.
-- **PR #103483** Related #103475.
-- **PR #99097** Related #99096. Thanks @gorkem2020 and @altaywtf.
-- **PR #103665** Related #78362. Thanks @Footree.
-- **PR #103670** Related #103662.
-- **PR #103671**
-- **PR #103629** Related #103626.
-- **PR #103672** Related #103661.
-- **PR #102486** Thanks @ragesaq and @shakkernerd.
-- **PR #103682**
-- **PR #103657** Thanks @LZY3538.
-- **PR #103669** Related #103666.
-- **PR #103689**
-- **PR #103020** Related #28506. Thanks @Alix-007 and @Leon-SK668 and @P5ina.
-- **PR #103072** Thanks @NianJiuZst.
-- **PR #103722** Related #103643.
-- **PR #103432**
-- **PR #103743**
-- **PR #103737** Thanks @vincentkoc.
-- **PR #103600**
-- **PR #103490** Related #103473. Thanks @xydt-lcy and @harjothkhara.
-- **PR #103767** Related #103766.
-- **PR #103777** Related #103753.
-- **PR #103790** Related #103749, #103754.
-- **PR #103796** Thanks @vincentkoc.
-- **PR #103772** Thanks @vincentkoc.
-- **PR #102530** Related #102508. Thanks @ZengWen-DT and @mnktn-lab.
-- **PR #103267** Thanks @NianJiuZst.
-- **PR #103339** Thanks @miorbnli.
-- **PR #103638** Related #103637. Thanks @royosherove.
-- **PR #97966** Related #97877. Thanks @maweibin and @patelmm79.
-- **PR #103748** Related #103554.
-- **PR #103798**
-- **PR #103814** Related #103741. Thanks @sallyom.
-- **PR #103759** Thanks @vincentkoc.
-- **PR #103647** Related #103205.
-- **PR #103769** Related #103768.
-- **PR #103816** Related #103782.
-- **PR #103810** Thanks @vincentkoc.
-- **PR #103108** Thanks @IWhatsskill.
-- **PR #103813** Thanks @zhangguiping-xydt.
-- **PR #103822**
-- **PR #103805** Thanks @lshgdut.
-- **PR #102262** Thanks @RomneyDa.
-- **PR #91797** Thanks @gucasbrg.
-- **PR #103815** Related #103245. Thanks @dankorotin.
-- **PR #101107** Thanks @zhangguiping-xydt.
-- **PR #90821** Related #66535. Thanks @Pick-cat and @xiaohuaxi.
-- **PR #103594** Thanks @qingminglong.
-- **PR #103709** Thanks @qingminglong.
-- **PR #103833**
-- **PR #97259** Thanks @cavit99.
-- **PR #103837**
-- **PR #103836** Related #92452. Thanks @jimmypuckett and @wodge73.
-- **PR #103839** Related #103831.
-- **PR #103832**
-- **PR #103645** Thanks @qingminglong.
-- **PR #101712** Thanks @Pick-cat and @miorbnli.
-- **PR #103843**
-- **PR #103821** Related #103554.
-- **PR #102781** Related #102700.
-- **PR #103569** Thanks @ZOOWH.
-- **PR #103834** Related #103774.
-- **PR #103848** Thanks @gucasbrg.
-- **PR #103498**
-- **PR #103863** Related #103854.
-- **PR #103878** Related #103875.
-- **PR #103870** Thanks @shakkernerd.
-- **PR #103526**
-- **PR #103649** Thanks @IWhatsskill.
-- **PR #103886** Related #103869.
-- **PR #103207** Related #103188. Thanks @vincentkoc.
-- **PR #103889** Related #103896.
-- **PR #103899**
-- **PR #103892** Related #103876.
-- **PR #103707** Thanks @Pick-cat.
-- **PR #103891** Thanks @vincentkoc.
-- **PR #103894** Related #103885.
-- **PR #103618**
-- **PR #103909** Thanks @lsr911.
-- **PR #103628** Related #102244. Thanks @joshavant and @qwer2003tw.
-- **PR #103925** Thanks @vincentkoc.
-- **PR #103922** Related #103919.
-- **PR #103809** Related #103800. Thanks @vincentkoc.
-- **PR #103515** Related #44749, #78225. Thanks @coygeek and @aukei.
-- **PR #103936** Related #103897.
-- **PR #90817** Related #90766. Thanks @Pick-cat and @cursoragent and @Timofa.
-- **PR #103943** Related #103942.
-- **PR #103941**
-- **PR #103908** Thanks @mushuiyu886.
-- **PR #103915** Thanks @hpumajun.
-- **PR #103944** Related #103939.
-- **PR #103945** Related #103902.
-- **PR #103960** Related #103888.
-- **PR #103951** Related #103851. Thanks @vincentkoc.
-- **PR #103757** Thanks @zhangguiping-xydt.
-- **PR #103964** Related #103887.
-- **PR #103789** Thanks @zhangguiping-xydt.
-- **PR #98105** Related #97996. Thanks @SunnyShu0925 and @sync-tachikoma.
-- **PR #103967**
-- **PR #103966** Thanks @vincentkoc.
-- **PR #103913** Thanks @vincentkoc.
-- **PR #103219** Thanks @lsr911.
-- **PR #103548** Thanks @qingminglong.
-- **PR #103971**
-- **PR #103962**
-- **PR #103972** Related #103969.
-- **PR #103442** Thanks @zhangguiping-xydt.
-- **PR #103738** Thanks @wings1029.
-- **PR #103976** Related #103168. Thanks @theo674.
-- **PR #103853**
-- **PR #103985**
-- **PR #103740** Thanks @wings1029.
-- **PR #103994**
-- **PR #103999**
-- **PR #103996**
-- **PR #104008** Thanks @vincentkoc.
-- **PR #104009**
-- **PR #103950**
-- **PR #103997**
-- **PR #104004**
-- **PR #103981** Thanks @soldforaloss and @vincentkoc.
-- **PR #104002** Thanks @vincentkoc.
-- **PR #104016**
-- **PR #104015**
-- **PR #104011** Related #104005.
-- **PR #104013**
-- **PR #96120** Thanks @armsteadj1 and @jalehman.
-- **PR #104010** Related #104003.
-- **PR #104007** Thanks @joshavant.
-- **PR #104025**
-- **PR #104024**
-- **PR #104028** Related #104019.
-- **PR #104001** Thanks @IWhatsskill.
-- **PR #103727** Thanks @Leon-SK668.
-- **PR #104030**
-- **PR #103408** Related #103400.
-- **PR #102469** Thanks @chenyangjun-xy.
-- **PR #103496** Thanks @qingminglong.
-- **PR #104035**
-- **PR #104036**
-- **PR #104037**
-- **PR #104047**
-- **PR #104043** Related #103830. Thanks @joshavant and @NexusCivInt.
-- **PR #104049**
-- **PR #103968**
-- **PR #104051**
-- **PR #104048**
-- **PR #104062**
-- **PR #104057** Related #104056.
-- **PR #103989** Related #103987.
-- **PR #104033** Related #104023.
-- **PR #98479** Related #98476. Thanks @haruaiclone-droid.
-- **PR #104066**
-- **PR #91828** Related #91154. Thanks @mushuiyu886 and @mlaihk.
-- **PR #103653** Thanks @soldforaloss and @vincentkoc.
-- **PR #101783** Thanks @zhangguiping-xydt and @obviyus.
-- **PR #103893** Thanks @IWhatsskill.
-- **PR #104073**
-- **PR #104061** Related #104040.
-- **PR #104074**
-- **PR #103273** Thanks @NianJiuZst.
-- **PR #104097**
-- **PR #104012** Related #103986.
-- **PR #104100** Thanks @wuqxuan and @ZOOWH and @qingminglong and @wangyan2026.
-- **PR #104092**
-- **PR #104099**
-- **PR #104090** Thanks @vincentkoc.
-- **PR #99905** Thanks @joshavant.
-- **PR #100908** Thanks @bdjben.
-- **PR #90942** Related #90941. Thanks @sasan1200.
-- **PR #91280** Related #53250. Thanks @deepujain and @yurtzy.
-- **PR #51926** Related #51903. Thanks @Liuhaai.
-- **PR #104124** Thanks @vincentkoc.
-- **PR #103642** Thanks @qingminglong.
-- **PR #104144** Related #104142. Thanks @obviyus.
-- **PR #90759** Related #76888. Thanks @zhangguiping-xydt and @obviyus and @hoyanhan.
-- **PR #102972** Thanks @zhangguiping-xydt and @obviyus.
-- **PR #102859** Thanks @Alix-007 and @Leon-SK668.
-- **PR #102062** Thanks @Alix-007.
-- **PR #102862** Thanks @Alix-007 and @Leon-SK668.
-- **PR #97007** Related #89551. Thanks @SunnyShu0925 and @syncword.
-- **PR #104089** Related #104087.
-- **PR #104174** Related #104163.
-- **PR #104177** Related #104169.
-- **PR #104137** Related #102064. Thanks @joshavant and @evie-openclaw-mytender.
-- **PR #104154** Related #104153.
-- **PR #104183** Related #14861. Thanks @slucasmyer.
-- **PR #104166** Thanks @vincentkoc.
-- **PR #104175** Thanks @vincentkoc.
-- **PR #104187** Related #104167.
-- **PR #104180** Related #104145.
-- **PR #104147** Related #104135. Thanks @obviyus.
-- **PR #104178**
-- **PR #104130** Related #104078.
-- **PR #103583** Related #12602. Thanks @steipete-oai and @JonasBoury.
-- **PR #104143** Related #104080.
-- **PR #104112** Related #104077.
-- **PR #104181** Thanks @vincentkoc.
-- **PR #104125**
-- **PR #104193**
-- **PR #104155**
-- **PR #104119** Thanks @Leon-SK668.
-- **PR #104200** Related #104197. Thanks @vincentkoc.
-- **PR #104198**
-- **PR #104202** Related #104170.
-- **PR #104203** Related #104081.
-- **PR #104172** Related #104079.
-- **PR #103547** Thanks @xialonglee.
-- **PR #104210** Related #104199. Thanks @vincentkoc.
-- **PR #87799** Related #73814, #90008. Thanks @SebTardif and @vincentkoc and @ItsMeForLua.
-- **PR #104191** Related #104082.
-- **PR #103555** Thanks @xialonglee.
-- **PR #104227** Related #104083.
-- **PR #104184** Related #104182.
-- **PR #104242**
-- **PR #104233**
-- **PR #104229**
-- **PR #104252**
-- **PR #104238** Related #104206.
-- **PR #103719** Related #103385. Thanks @cxbAsDev and @solavrc.
-- **PR #104045** Related #103235.
-- **PR #104228**
-- **PR #99086** Thanks @maweibin.
-- **PR #104215**
-- **PR #104213** Related #104208. Thanks @obviyus.
-- **PR #104247**
-- **PR #104237** Thanks @steipete-oai.
-- **PR #95263** Thanks @hugenshen.
-- **PR #104262**
-- **PR #104235**
-- **PR #104266**
-- **PR #104171** Related #104041.
-- **PR #104291** Thanks @vincentkoc.
-- **PR #104281** Thanks @steipete-oai.
-- **PR #104207** Thanks @steipete-oai.
-- **PR #104280** Thanks @jimmypuckett.
-- **PR #103867** Thanks @yetval.
-- **PR #104268**
-- **PR #102865** Thanks @Alix-007 and @Leon-SK668.
-- **PR #104297** Thanks @vincentkoc.
-- **PR #104287** Related #104231.
-- **PR #104255** Related #104253.
-- **PR #104300**
-- **PR #104239**
-- **PR #104303**
-- **PR #104305** Related #104304.
-- **PR #103619** Thanks @pgondhi987.
-- **PR #104299**
-- **PR #104306** Related #104214. Thanks @vincentkoc.
-- **PR #104311**
-- **PR #104302** Related #104282.
-- **PR #104307** Thanks @vincentkoc.
-- **PR #102965** Thanks @chengzhichao-xydt.
-- **PR #104310** Related #104309. Thanks @vincentkoc.
-- **PR #104314**
-- **PR #104205** Related #104204.
-- **PR #104316**
-- **PR #104296**
-- **PR #104150**
-- **PR #99972** Related #99603. Thanks @chenyangjun-xy and @NOVA-Openclaw.
-- **PR #104329**
-- **PR #104332**
-- **PR #104331**
-- **PR #104324**
-- **PR #104334**
-- **PR #104341**
-- **PR #104328**
-- **PR #104345**
-- **PR #104337** Related #104330.
-- **PR #104348** Related #104313.
-- **PR #104349** Related #104346. Thanks @vincentkoc.
-- **PR #104352** Thanks @vincentkoc.
-- **PR #104350** Related #104338.
-- **PR #104356**
-- **PR #104357**
-- **PR #104368** Related #104363.
-- **PR #104387**
-- **PR #104374** Related #104365.
-- **PR #97740** Related #97069. Thanks @saju01 and @jimmybrancaccio.
-- **PR #104376**
-- **PR #104361** Related #104321.
-- **PR #104370**
-- **PR #102341** Thanks @xialonglee.
-- **PR #94999** Thanks @hugenshen.
-- **PR #104342**
-- **PR #95536** Related #94124. Thanks @xydt-tanshanshan and @kumaxs.
-- **PR #104355**
-- **PR #104380**
-- **PR #104378** Related #104375. Thanks @vincentkoc.
-- **PR #104384**
-- **PR #104139** Thanks @100yenadmin.
-- **PR #104397** Related #104371.
-- **PR #104392**
-- **PR #104391**
-- **PR #104400**
-- **PR #104398**
-- **PR #104407** Related #104372.
-- **PR #104408**
-- **PR #104411**
-- **PR #104293** Thanks @qingminglong.
-- **PR #104402** Related #42510. Thanks @neeravmakwana and @banddude and @novan and @svmark.
-- **PR #103752** Thanks @Leon-SK668.
-- **PR #104418**
-- **PR #104421**
-- **PR #104417** Thanks @vincentkoc.
-- **PR #104419** Related #104382.
-- **PR #103728** Thanks @Leon-SK668 and @vincentkoc.
-- **PR #104426** Related #104425.
-- **PR #104431**
-- **PR #104254** Related #103783.
-- **PR #104434**
-- **PR #104416** Related #104409.
-- **PR #104439**
-- **PR #104225** Thanks @NianJiuZst.
-- **PR #104226** Thanks @NianJiuZst.
-- **PR #104249** Thanks @zhangguiping-xydt.
-- **PR #103731** Thanks @Leon-SK668 and @vincentkoc.
-- **PR #104401**
-- **PR #104448**
-- **PR #104447**
-- **PR #104443** Related #104435. Thanks @vincentkoc.
-- **PR #89442** Thanks @zhangguiping-xydt.
-- **PR #104445** Related #104444.
-- **PR #104319** Thanks @obviyus.
-- **PR #104450** Related #91212. Thanks @Enominera.
-- **PR #104451**
-- **PR #104244** Thanks @qingminglong.
-- **PR #104455**
-- **PR #104263** Thanks @qingminglong.
-- **PR #92411** Thanks @Pick-cat.
-- **PR #104459** Thanks @vincentkoc.
-- **PR #98561** Related #98560. Thanks @haruaiclone-droid.
-- **PR #104437** Related #104399.
-- **PR #104156** Thanks @qingminglong.
-- **PR #103975** Related #103973.
-- **PR #104438**
-- **PR #104173** Thanks @qingminglong.
-- **PR #104465**
-- **PR #104475** Related #104388.
-- **PR #104472** Related #104471. Thanks @vincentkoc.
-- **PR #104452** Related #104446.
-- **PR #104482**
-- **PR #97157** Thanks @yetval.
-- **PR #104478**
-- **PR #104110** Thanks @zhangguiping-xydt and @vincentkoc.
-- **PR #104404** Thanks @mushuiyu886 and @vincentkoc.
-- **PR #104422** Related #104386.
-- **PR #95725** Related #94224. Thanks @LZY3538 and @davh55.
-- **PR #103331** Thanks @bdjben.
-- **PR #104343** Thanks @vincentkoc.
-- **PR #104508** Thanks @obviyus.
-- **PR #104532**
-- **PR #104528** Related #104493.
-- **PR #104476** Thanks @obviyus.
-- **PR #104542**
-- **PR #104188** Related #104176. Thanks @kevinslin and @kevinlin-openai.
-- **PR #104539**
-- **PR #104553**
-- **PR #101000** Thanks @hugenshen and @cursoragent.
-- **PR #104557**
-- **PR #104563**
-- **PR #104440** Thanks @qingminglong.
-- **PR #104260** Thanks @hugenshen.
-- **PR #104151** Thanks @hugenshen.
-- **PR #104148** Thanks @hugenshen.
-- **PR #104414** Thanks @qingminglong.
-- **PR #104572**
-- **PR #104201**
-- **PR #104410** Thanks @qingminglong.
-- **PR #104556** Thanks @qingminglong.
-- **PR #90431**
-- **PR #104573**
-- **PR #104579**
-- **PR #102883** Related #102844, #102845, #102846.
-- **PR #104577** Related #104558.
-- **PR #104581**
-- **PR #104583**
-- **PR #104587** Related #104584.
-- **PR #104595**
-- **PR #104593**
-- **PR #104574**
-- **PR #104464** Thanks @zhangguiping-xydt.
-- **PR #102974** Thanks @hugenshen.
-- **PR #104536** Thanks @qingminglong.
-- **PR #89702** Related #92768. Thanks @EaveLuo.
-- **PR #104582**
-- **PR #104586** Thanks @vyctorbrzezowski.
-- **PR #104449** Related #94102. Thanks @Pick-cat and @alexph-dev.
-- **PR #104596**
-- **PR #104594**
-- **PR #104605**
-- **PR #104601** Related #103784.
-- **PR #104606**
-- **PR #104591** Related #104588.
-- **PR #104613**
-- **PR #104527** Related #104436.
-- **PR #104610**
-- **PR #104616** Related #104609.
-- **PR #104608**
-- **PR #104618**
-- **PR #104625**
-- **PR #104628**
-- **PR #104626**
-- **PR #104118** Related #104117. Thanks @moguangyu5-design and @chengzhichao-xydt.
-- **PR #104603** Thanks @dwc1997.
-- **PR #104634**
-- **PR #104636** Related #104565.
-- **PR #104301** Thanks @whiteyzy.
-- **PR #104649**
-- **PR #104647**
-- **PR #104651**
-- **PR #104646** Related #104474. Thanks @shakkernerd.
-- **PR #100965** Thanks @hugenshen.
-- **PR #104661** Related #104645.
-- **PR #104655**
-- **PR #104658**
-- **PR #104612** Thanks @wangmiao0668000666.
-- **PR #104659** Related #104457.
-- **PR #104547** Thanks @yetval.
-- **PR #104592** Thanks @hugenshen.
-- **PR #104669** Related #104644.
-- **PR #104578** Thanks @hugenshen.
-- **PR #104670**
-- **PR #104502** Related #104424.
-- **PR #104665**
-- **PR #104674**
-- **PR #103903**
-- **PR #104673**
-- **PR #103445** Thanks @zw-xysk and @cursoragent.
-- **PR #104650** Related #104648.
-- **PR #104682** Related #104679.
-- **PR #104686**
-- **PR #104689** Related #104456.
-- **PR #104676**
-- **PR #104561**
-- **PR #104680**
-- **PR #104107** Related #104091.
-- **PR #104688**
-- **PR #104694**
-- **PR #104696**
-- **PR #104695**
-- **PR #104701** Thanks @vincentkoc.
-- **PR #104385** Thanks @mushuiyu886.
-- **PR #104677** Thanks @Leon-SK668.
-- **PR #104699**
-- **PR #104423** Thanks @mushuiyu886.
-- **PR #104697**
-- **PR #104638** Thanks @vyctorbrzezowski.
-- **PR #104705**
-- **PR #104396** Thanks @zhangguiping-xydt.
-- **PR #104604** Related #104590.
-- **PR #104560** Thanks @wings1029.
-- **PR #104710** Related #104709.
-- **PR #104095** Thanks @Leon-SK668.
-- **PR #104620** Thanks @IWhatsskill.
-- **PR #104276** Related #104245.
-- **PR #104621** Thanks @hugenshen.
-- **PR #104576** Thanks @wangmiao0668000666.
-- **PR #104454** Thanks @chenyangjun-xy.
-- **PR #104496** Thanks @wings1029.
-- **PR #104075** Thanks @IWhatsskill.
-- **PR #104715** Thanks @Leon-SK668.
-- **PR #104622** Thanks @vyctorbrzezowski.
-- **PR #104460** Thanks @IWhatsskill.
-- **PR #104470** Related #104469. Thanks @VectorPeak.
-- **PR #104723**
-- **PR #104724** Thanks @vyctorbrzezowski.
-- **PR #104726**
-- **PR #104728**
-- **PR #104653**
-- **PR #103860** Related #103362. Thanks @lin-hongkuan and @harjothkhara.
-- **PR #103181** Related #103137. Thanks @HOYALIM and @blinbaum.
-- **PR #104737** Related #104731.
-- **PR #104685** Related #103150.
-- **PR #104735**
-- **PR #104498** Thanks @VectorPeak.
-- **PR #104739** Related #100622. Thanks @aniruddhaadak80.
-- **PR #104652** Thanks @vyctorbrzezowski.
-- **PR #104741** Thanks @vincentkoc.
-- **PR #104619** Thanks @hugenshen.
-- **PR #104740**
-- **PR #103011** Thanks @NianJiuZst.
-- **PR #104531** Thanks @zhangguiping-xydt.
-- **PR #104744** Thanks @vyctorbrzezowski.
-- **PR #104745** Related #104743.
-- **PR #104748** Related #104738.
-- **PR #104754** Thanks @zhangguiping-xydt.
-- **PR #104751**
-- **PR #104487** Thanks @chengzhichao-xydt.
-- **PR #104635** Related #104614. Thanks @compoodment.
-- **PR #104540** Thanks @zhangguiping-xydt.
-- **PR #104633** Thanks @zhangguiping-xydt.
-- **PR #104758**
-- **PR #97888** Thanks @joshavant.
-- **PR #89816** Thanks @Pick-cat.
-- **PR #104752**
-- **PR #104575** Thanks @hugenshen.
-- **PR #104678** Thanks @Leon-SK668.
-- **PR #104761** Related #104746.
-- **PR #104094** Thanks @Leon-SK668.
-- **PR #104760**
-- **PR #104749** Related #104747.
-- **PR #103263** Thanks @yetval.
-- **PR #104777**
-- **PR #104550** Related #104518. Thanks @ObliviateRickLin and @PollyBot13.
-- **PR #104526** Related #104524. Thanks @arturict and @aspalagin.
-- **PR #104771**
-- **PR #104567** Related #104566. Thanks @leonme.
-- **PR #104617** Thanks @vyctorbrzezowski.
-- **PR #104784**
-- **PR #104774**
-- **PR #104772** Thanks @vincentkoc.
-- **PR #104766**
-- **PR #103472** Thanks @ZOOWH and @ly85206559.
-- **PR #104059** Related #104058. Thanks @moguangyu5-design and @vincentkoc.
-- **PR #104571** Related #104568. Thanks @NianJiuZst.
-- **PR #104789**
-- **PR #104065** Related #104050. Thanks @harjothkhara and @vincentkoc and @btrailor.
-- **PR #104790**
-- **PR #104787** Related #104780.
-- **PR #104776** Related #104775.
-- **PR #104554** Thanks @qingminlong.
-- **PR #103579**
-- **PR #104797**
-- **PR #104129** Thanks @Leon-SK668.
-- **PR #97722** Thanks @zhangguiping-xydt.
-- **PR #104109** Thanks @mushuiyu886.
-- **PR #104534** Thanks @qingminglong.
-- **PR #104802**
-- **PR #104759** Related #104720. Thanks @wuqxuan and @context-down.
-- **PR #104026** Related #104014. Thanks @ObliviateRickLin.
-- **PR #103998** Related #103882. Thanks @MonkeyLeeT and @wbrom42.
-- **PR #103248** Thanks @guarismo.
-- **PR #104770** Related #104764.
-- **PR #104767** Thanks @chengzhichao-xydt.
-- **PR #104289** Thanks @Alix-007.
-- **PR #104736** Thanks @sjf-oa and @sjf.
-- **PR #104805**
-- **PR #104801** Thanks @vincentkoc.
-- **PR #104795**
-- **PR #101912** Thanks @snowzlmbot.
-- **PR #103704** Thanks @hugenshen.
-- **PR #104717** Related #104598.
-- **PR #104813**
-- **PR #104809**
-- **PR #103763** Thanks @litang9.
-- **PR #104788** Thanks @Leon-SK668.
-- **PR #104823** Thanks @vincentkoc.
-- **PR #104757** Related #104698.
-- **PR #104523** Thanks @ekinnee.
-- **PR #104826**
-- **PR #104121** Thanks @Alix-007.
-- **PR #102340** Thanks @jontsai.
-- **PR #104831**
-- **PR #104832** Related #104781.
-- **PR #104546** Thanks @obviyus.
-- **PR #104839**
-- **PR #104827** Related #104822.
-- **PR #104768** Related #104765.
-- **PR #104819** Related #104818.
-- **PR #104693**
-- **PR #104828**
-- **PR #103679**
-- **PR #104882**
-- **PR #104891** Thanks @vincentkoc.
-- **PR #104884** Related #104881. Thanks @shakkernerd.
-- **PR #103698**
-- **PR #104864**
-- **PR #104894** Thanks @vincentkoc.
-- **PR #104885**
-- **PR #104897** Thanks @vincentkoc.
-- **PR #104858**
-- **PR #104308** Thanks @Pick-cat.
-- **PR #104900**
-- **PR #104902** Thanks @vincentkoc.
-- **PR #104887** Thanks @vincentkoc.
-- **PR #104908** Thanks @scoootscooob.
-- **PR #99880** Thanks @xialonglee and @Solvely-Colin.
-- **PR #104808**
-- **PR #104913**
-- **PR #103912**
-- **PR #101694** Thanks @Alix-007.
-- **PR #104925** Thanks @vincentkoc.
-- **PR #104926** Thanks @vincentkoc.
-- **PR #104883**
-- **PR #104859** Related #104856. Thanks @vincentkoc.
-- **PR #104909**
-- **PR #104838**
-- **PR #104773**
-- **PR #104936** Thanks @vincentkoc.
-- **PR #104934** Thanks @vincentkoc.
-- **PR #104914** Thanks @vincentkoc.
-- **PR #104938** Thanks @vincentkoc.
-- **PR #104943** Thanks @vincentkoc.
-- **PR #104873** Thanks @IWhatsskill and @Solvely-Colin.
-- **PR #104944** Thanks @vincentkoc.
-- **PR #104948** Thanks @vincentkoc.
-- **PR #104952** Thanks @vincentkoc.
-- **PR #104946** Related #104945.
-- **PR #104954** Thanks @vincentkoc.
-- **PR #104958** Thanks @vincentkoc.
-- **PR #104961** Thanks @vincentkoc.
-- **PR #104880** Thanks @obviyus.
-- **PR #104886** Thanks @obviyus.
-- **PR #104960** Thanks @vincentkoc.
-- **PR #104974**
-- **PR #104964** Related #104945.
-- **PR #104834** Related #104833.
-- **PR #69039** Thanks @sallyom.
-- **PR #104988** Thanks @vincentkoc.
-- **PR #104990** Thanks @vincentkoc.
-- **PR #104963** Thanks @vincentkoc.
-- **PR #104994** Thanks @vincentkoc.
-- **PR #104978** Thanks @vincentkoc.
-- **PR #104998** Thanks @vincentkoc.
-- **PR #104730** Related #104700.
-- **PR #104734** Related #104713. Thanks @ObliviateRickLin and @davefano.
-- **PR #104995**
-- **PR #105005** Thanks @vincentkoc.
-- **PR #104792** Thanks @IWhatsskill.
-- **PR #104906** Thanks @xydigit-zt.
-- **PR #105007**
-- **PR #104807**
-- **PR #105006**
-- **PR #104846**
-- **PR #104981**
-- **PR #104997** Related #104993.
-- **PR #104921** Thanks @xydigit-zt.
-- **PR #104116** Thanks @Pick-cat.
-- **PR #104866** Related #104844. Thanks @obviyus.
-- **PR #105015** Related #95685. Thanks @zw-xysk and @shawnsaxis1971-arch.
-- **PR #105008** Thanks @vincentkoc.
-- **PR #105026** Related #103691. Thanks @vincentkoc.
-- **PR #105023** Thanks @vincentkoc.
-- **PR #103522** Related #103386. Thanks @lonexreb and @solavrc.
-- **PR #105031** Thanks @vincentkoc.
-- **PR #105020** Related #105019.
-- **PR #104687** Thanks @Leon-SK668.
-- **PR #103155** Thanks @soldforaloss.
-- **PR #104814** Related #104791.
-- **PR #105024**
-- **PR #104251** Related #104217.
-- **PR #104942** Related #104941. Thanks @moguangyu5-design.
-- **PR #105037**
-- **PR #105047** Related #105045.
-- **PR #104190** Related #93928. Thanks @destire-mio and @yetval.
-- **PR #105052**
-- **PR #102366** Related #102365. Thanks @galiniliev.
-- **PR #104800** Thanks @chengzhichao-xydt.
-- **PR #105094** Thanks @vincentkoc.
-- **PR #105091** Related #105087.
-- **PR #104796** Thanks @Leon-SK668.
-- **PR #102060** Related #97593. Thanks @yetval.
-- **PR #104811** Thanks @ShiroKSH.
-- **PR #105072** Related #59090. Thanks @whisky0809 and @bdhwan.
-- **PR #103491** Thanks @zw-xysk.
-- **PR #105048**
-- **PR #104816**
-- **PR #105100** Thanks @vincentkoc.
-- **PR #105092** Thanks @Leon-SK668.
-- **PR #105082**
-- **PR #105071**
-- **PR #105117** Thanks @vincentkoc.
-- **PR #105099** Related #105043.
-- **PR #105126**
-- **PR #105107** Thanks @vincentkoc.
-- **PR #105115** Thanks @snowzlmbot.
-- **PR #105114** Related #105051.
-- **PR #105134**
-- **PR #105136** Thanks @vincentkoc.
-- **PR #105088** Thanks @vincentkoc.
-- **PR #105046**
-- **PR #105065** Related #105053.
-- **PR #105140** Related #105130.
-- **PR #104863** Thanks @Leon-SK668.
-- **PR #105076** Thanks @vincentkoc.
-- **PR #105118** Thanks @vincentkoc.
-- **PR #105057** Related #100978.
-- **PR #103811** Related #103387. Thanks @lonexreb and @solavrc.
-- **PR #105132**
-- **PR #103303** Thanks @zw-xysk.
-- **PR #105069** Related #105068.
-- **PR #105144**
-- **PR #105150** Thanks @vincentkoc.
-- **PR #105159** Thanks @vincentkoc.
-- **PR #105143** Related #105122.
-- **PR #105022** Related #104945.
-- **PR #105142** Thanks @paulislava.
-- **PR #105075**
-- **PR #105038** Related #104999. Thanks @vincentkoc.
-- **PR #101274** Thanks @Pick-cat.
-- **PR #105169** Thanks @zhangguiping-xydt.
-- **PR #105095** Related #104996.
-- **PR #105172**
-- **PR #105153** Related #105109.
-- **PR #105174** Related #105141.
-- **PR #105061**
-- **PR #105179** Thanks @vincentkoc.
-- **PR #105160** Related #96653. Thanks @SunnyShu0925 and @willfivestar.
-- **PR #105205** Thanks @vincentkoc.
-- **PR #105206** Related #105181. Thanks @vincentkoc.
-- **PR #105177** Related #105176.
-- **PR #102881** Related #102834. Thanks @wangyan2026 and @yetval.
-- **PR #105083** Related #105004.
-- **PR #105208**
-- **PR #105210**
-- **PR #82505** Related #82504. Thanks @coygeek.
-- **PR #105175** Related #105129.
-- **PR #105050**
-- **PR #105213**
-- **PR #105180**
-- **PR #105224** Thanks @vincentkoc.
-- **PR #105219**
-- **PR #105151** Related #38844. Thanks @tigicion.
-- **PR #105221**
-- **PR #105215** Related #94058. Thanks @Alix-007 and @needtocalmdown.
-- **PR #105220** Related #105207.
-- **PR #105214**
-- **PR #105236** Thanks @vincentkoc.
-- **PR #105222** Thanks @vincentkoc.
-- **PR #105241**
-- **PR #105182** Related #105178.
-- **PR #105250** Thanks @vincentkoc.
-- **PR #105245** Thanks @vincentkoc.
-- **PR #105223**
-- **PR #105252**
-- **PR #105251**
-- **PR #105249** Related #105225.
-- **PR #105253**
-- **PR #105254**
-- **PR #105242**
-- **PR #105256**
-- **PR #104837**
-- **PR #103921**
-- **PR #103932**
-- **PR #105209** Related #105165.
-- **PR #105268**
-- **PR #105239** Related #104600.
-- **PR #105054**
-- **PR #105270**
-- **PR #105273** Thanks @vincentkoc.
-- **PR #105260** Thanks @vincentkoc.
-- **PR #105261** Related #105218.
-- **PR #105259** Thanks @Pick-cat.
-- **PR #105272**
-- **PR #105030**
-- **PR #105276** Thanks @vincentkoc.
-- **PR #105255** Thanks @vincentkoc.
-- **PR #105283**
-- **PR #105285** Related #105278.
-- **PR #105280**
-- **PR #105282** Related #105281.
-- **PR #105291**
-- **PR #105293** Thanks @vincentkoc.
-- **PR #105299**
-- **PR #100929** Thanks @vyctorbrzezowski.
-- **PR #105123** Thanks @vincentkoc.
-- **PR #105292**
-- **PR #105303**
-- **PR #105304** Related #105294.
-- **PR #105309** Thanks @vincentkoc.
-- **PR #105265** Related #105264.
-- **PR #105313** Related #105308.
-- **PR #105312** Thanks @vincentkoc.
-- **PR #105311**
-- **PR #105317** Thanks @vincentkoc.
-- **PR #105324**
-- **PR #105049** Thanks @vincentkoc.
-- **PR #105332** Thanks @vincentkoc.
-- **PR #105333**
-- **PR #105314** Thanks @vincentkoc.
-- **PR #105330** Thanks @vyctorbrzezowski.
-- **PR #105331** Related #105326.
-- **PR #105287** Related #105154, #105155. Thanks @vincentkoc.
-- **PR #105337**
-- **PR #105345** Thanks @vincentkoc.
-- **PR #105343**
-- **PR #105340**
-- **PR #105349** Thanks @vincentkoc.
-- **PR #105351** Related #105344.
-- **PR #105336** Related #91083. Thanks @Lucenx9 and @LaPhilosophie and @hanZeng-08 and @Medicalmusings.
-- **PR #105341** Thanks @vincentkoc.
-- **PR #105352**
-- **PR #101864** Thanks @snowzlmbot.
-- **PR #105355** Thanks @vincentkoc.
-- **PR #105348**
-- **PR #105358** Thanks @vincentkoc.
-- **PR #105361**
-- **PR #105363** Thanks @vincentkoc.
-- **PR #105359** Related #105354.
-- **PR #101852** Thanks @mmaps.
-- **PR #105362**
-- **PR #105360**
-- **PR #105366** Related #105364.
-- **PR #105369** Thanks @vincentkoc.
-- **PR #105275**
-- **PR #105377** Thanks @vincentkoc.
-- **PR #105367**
-- **PR #105370** Thanks @vincentkoc.
-- **PR #105382**
-- **PR #105385** Thanks @vincentkoc.
-- **PR #105388** Related #105383. Thanks @vincentkoc.
-- **PR #105394** Thanks @vincentkoc.
-- **PR #105375**
-- **PR #105384** Related #105373.
-- **PR #105400** Thanks @vincentkoc.
-- **PR #105406** Thanks @vincentkoc.
-- **PR #105412** Thanks @vincentkoc and @giodl73-repo.
-- **PR #105416** Thanks @vincentkoc.
-- **PR #105390**
-- **PR #105411**
-- **PR #105443** Thanks @vincentkoc.
-- **PR #105398**
-- **PR #105446** Thanks @vincentkoc.
-- **PR #105399**
-- **PR #105421** Related #105404.
-- **PR #105395** Thanks @vincentkoc.
-- **PR #105407** Thanks @vincentkoc.
-- **PR #105408** Thanks @vincentkoc.
-- **PR #104488** Thanks @hugenshen.
-- **PR #105409** Thanks @vincentkoc.
-- **PR #105459** Thanks @vincentkoc.
-- **PR #105468** Thanks @vincentkoc.
-- **PR #105469** Related #105463. Thanks @vincentkoc.
-- **PR #105103** Thanks @qingminglong.
-- **PR #105474** Thanks @vincentkoc.
-- **PR #105476** Related #105461. Thanks @vincentkoc.
-- **PR #102357** Related #102356. Thanks @galiniliev and @steipete-oai.
-- **PR #105482** Thanks @vincentkoc.
-- **PR #105472**
-- **PR #102094** Thanks @Alix-007.
-- **PR #105486** Thanks @vincentkoc.
-- **PR #102072** Thanks @Alix-007.
-- **PR #105497** Thanks @vincentkoc.
-- **PR #105499**
-- **PR #105495**
-- **PR #105502** Thanks @vincentkoc.
-- **PR #103018** Thanks @Alix-007 and @Leon-SK668.
-- **PR #104290** Thanks @Alix-007.
-- **PR #105505** Thanks @vincentkoc.
-- **PR #105506** Thanks @vincentkoc.
-- **PR #105510** Thanks @vincentkoc.
-- **PR #105508**
-- **PR #105509**
-- **PR #105522** Thanks @vincentkoc.
-- **PR #105524** Thanks @vincentkoc.
-- **PR #105372** Thanks @vincentkoc.
-- **PR #105516**
-- **PR #105525** Thanks @vincentkoc and @giodl73-repo.
-- **PR #105521**
-- **PR #103634** Thanks @gorkem2020.
-- **PR #105526** Thanks @vincentkoc.
-- **PR #105119**
-- **PR #105531** Thanks @vincentkoc.
-- **PR #103995** Thanks @efrazer-oai.
-- **PR #105534** Thanks @vincentkoc.
-- **PR #105538** Thanks @vincentkoc.
-- **PR #104815** Related #104803.
-- **PR #105542** Thanks @vincentkoc.
-- **PR #101469** Thanks @cxbAsDev.
-- **PR #104919** Related #104903. Thanks @Glucksberg and @evan-YM.
-- **PR #104962** Thanks @mcaxtr.
-- **PR #105546** Thanks @vincentkoc.
-- **PR #105535**
-- **PR #104949** Thanks @mcaxtr.
-- **PR #105116**
-- **PR #105545**
-- **PR #105554** Thanks @vincentkoc.
-- **PR #105541**
-- **PR #105552** Related #105543.
-- **PR #105563** Thanks @vincentkoc.
-- **PR #105570** Thanks @vincentkoc.
-- **PR #105566**
-- **PR #104896** Thanks @dwc1997.
-- **PR #105555** Related #105532.
-- **PR #105572** Thanks @vincentkoc.
-- **PR #105569**
-- **PR #105577** Thanks @vincentkoc.
-- **PR #105012** Related #105010.
-- **PR #105583** Thanks @vincentkoc.
-- **PR #105587** Thanks @vincentkoc.
-- **PR #105589** Thanks @vincentkoc.
-- **PR #105585** Related #105581.
-- **PR #105596** Thanks @vincentkoc.
-- **PR #105591**
-- **PR #105599** Thanks @vincentkoc.
-- **PR #104662** Thanks @Alix-007.
-- **PR #105600** Related #105582.
-- **PR #105595** Related #105575.
-- **PR #105597**
-- **PR #105606** Thanks @vincentkoc.
-- **PR #105540**
-- **PR #105598**
-- **PR #105603**
-- **PR #105612** Thanks @vincentkoc.
-- **PR #105592**
-- **PR #105615**
-- **PR #105627**
-- **PR #105611**
-- **PR #105607**
-- **PR #105613**
-- **PR #105626** Related #105608.
-- **PR #105631** Thanks @vincentkoc.
-- **PR #103717** Thanks @Pick-cat.
-- **PR #103468** Thanks @zw-xysk.
-- **PR #105471** Thanks @IWhatsskill.
-- **PR #105628**
-- **PR #104274** Thanks @qingminglong.
-- **PR #105636**
-- **PR #105605**
-- **PR #105539** Related #105035.
-- **PR #105639** Thanks @vincentkoc.
-- **PR #105635** Related #81583. Thanks @hercial61.
-- **PR #105616** Related #105590.
-- **PR #104196** Related #104194. Thanks @AnthonyStainer.
-- **PR #105646** Related #105602.
-- **PR #101474** Thanks @yourslewis.
-- **PR #105645** Thanks @vincentkoc.
-- **PR #104152** Thanks @qingminglong.
-- **PR #105663** Thanks @vincentkoc.
-- **PR #105671** Related #105618.
-- **PR #105642** Related #105568.
-- **PR #105687** Thanks @vincentkoc.
-- **PR #104675** Thanks @vyctorbrzezowski.
-- **PR #105691** Thanks @vincentkoc.
-- **PR #105688** Related #105127.
-- **PR #104122** Thanks @Alix-007 and @sallyom.
-- **PR #105704** Thanks @vincentkoc.
-- **PR #105711** Thanks @vincentkoc.
-- **PR #105718** Thanks @vincentkoc and @giodl73-repo.
-- **PR #105709**
-- **PR #105702** Related #105632.
-- **PR #105719**
-- **PR #105721** Thanks @vincentkoc.
-- **PR #105722** Thanks @vincentkoc.
-- **PR #105594**
-- **PR #105604**
-- **PR #105580** Thanks @mcaxtr.
-- **PR #105740** Thanks @vincentkoc and @giodl73-repo.
-- **PR #105739**
-- **PR #105717** Related #88307. Thanks @vincentkoc and @compoodment.
-- **PR #105728** Thanks @fuller-stack-dev.
-- **PR #102231** Thanks @hugenshen.
-- **PR #105737**
-- **PR #105742**
-- **PR #105743** Related #105730.
-- **PR #105755**
-- **PR #105492** Related #105436. Thanks @evan-YM and @aniruddhaadak80.
-- **PR #105746** Thanks @vincentkoc.
-- **PR #105720** Thanks @vincentkoc.
-- **PR #105760**
-- **PR #105762**
-- **PR #104168** Thanks @Pick-cat.
-- **PR #105747** Thanks @vincentkoc.
-- **PR #105767** Thanks @vincentkoc.
-- **PR #105756** Thanks @vincentkoc.
-- **PR #105771**
-- **PR #105772** Thanks @vincentkoc.
-- **PR #105773** Thanks @vincentkoc.
-- **PR #105778**
-- **PR #105774** Related #105748.
-- **PR #105776** Related #105733.
-- **PR #105777**
-- **PR #105397** Thanks @VectorPeak.
-- **PR #104132** Thanks @chengzhichao-xydt.
-- **PR #105782** Thanks @vincentkoc.
-- **PR #105519** Related #105422. Thanks @wuqxuan and @aniruddhaadak80.
-- **PR #105614** Related #105439. Thanks @xiaobao-k8s and @aniruddhaadak80.
-- **PR #105770** Related #105749.
-- **PR #105386** Related #105188. Thanks @ZOOWH and @aniruddhaadak80.
-- **PR #105788**
-- **PR #105768**
-- **PR #105783** Related #105758.
-- **PR #105792**
-- **PR #105790** Related #58570. Thanks @UBIpromoter.
-- **PR #105800** Thanks @vincentkoc.
-- **PR #105799** Thanks @vincentkoc.
-- **PR #105786** Related #105785.
-- **PR #105804** Related #105764.
-- **PR #105811** Thanks @vincentkoc.
-- **PR #105809**
-- **PR #102976** Thanks @hugenshen.
-- **PR #105289** Related #103736. Thanks @LZY3538 and @yetval.
-- **PR #105801** Related #105745, #105779.
-- **PR #105812** Thanks @vincentkoc.
-- **PR #105816**
-- **PR #105387** Thanks @qingminlong.
-- **PR #105794**
-- **PR #105815**
-- **PR #105834** Thanks @vincentkoc.
-- **PR #105813** Related #88643. Thanks @tianxiaochannel-oss88.
-- **PR #105832**
-- **PR #105802** Related #105761.
-- **PR #105839**
-- **PR #105856** Thanks @vincentkoc.
-- **PR #105878** Thanks @vincentkoc.
-- **PR #105859**
-- **PR #105315** Thanks @qingminglong.
-- **PR #105891** Thanks @vincentkoc.
-- **PR #105864**
-- **PR #105861**
-- **PR #105894** Related #105825.
-- **PR #105826**
-- **PR #105789** Related #105757.
-- **PR #105795** Thanks @morluto.
-- **PR #105908** Thanks @vincentkoc.
-- **PR #105818** Thanks @lzw112.
-- **PR #105858**
-- **PR #105769** Thanks @mushuiyu886.
-- **PR #99007** Related #98865. Thanks @maweibin and @carterstebbins23-spec.
-- **PR #105876**
-- **PR #105902** Related #105898.
-- **PR #105808**
-- **PR #105906** Related #105905.
-- **PR #104632** Thanks @Glucksberg.
-- **PR #105925** Related #105900.
-- **PR #105918**
-- **PR #97078** Thanks @developersdigest.
-- **PR #105955**
-- **PR #104218** Related #104136. Thanks @zw-xysk and @cursoragent and @dale-goes-fast.
-- **PR #105983**
-- **PR #105991**
-- **PR #105365** Thanks @Glucksberg.
-- **PR #105997** Related #90925. Thanks @obviyus and @DolencLuka.
-- **PR #106022**
-- **PR #105941** Related #102367. Thanks @saagarvaru.
-- **PR #105831** Related #105828, #105829. Thanks @obviyus.
-- **PR #103620** Thanks @pgondhi987.
-- **PR #106006** Related #105965.
-- **PR #106042**
-- **PR #106003** Related #105950.
-- **PR #105913** Related #105912.
-- **PR #106052**
-- **PR #105867**
-- **PR #106071** Related #106059. Thanks @obviyus.
-- **PR #105975** Related #105949.
-- **PR #106048** Related #104105. Thanks @joshavant and @yetval.
-- **PR #106061**
-- **PR #105961** Related #105956. Thanks @sjf.
-- **PR #105977** Related #105972.
-- **PR #105953** Related #105932.
-- **PR #105989** Related #105969.
-- **PR #106037** Thanks @vincentkoc.
-- **PR #105948** Related #105946. Thanks @vincentkoc.
-- **PR #105947**
-- **PR #106051** Related #105915.
-- **PR #106070**
-- **PR #106064** Thanks @fuller-stack-dev.
-- **PR #105927**
-- **PR #105957** Related #105897.
-- **PR #105995** Related #105964.
-- **PR #106001** Thanks @fuller-stack-dev.
-- **PR #102924** Thanks @hugenshen.
-- **PR #106017**
-- **PR #106072** Thanks @vincentkoc.
-- **PR #105944** Related #105938.
-- **PR #105945** Thanks @vincentkoc.
-- **PR #105952**
-- **PR #106087**
-- **PR #97086** Thanks @paulcam206 and @giodl73-repo and @RomneyDa.
-- **PR #106021**
-- **PR #106063**
-- **PR #106031**
-- **PR #106062** Related #106053.
-- **PR #105890**
-- **PR #106096** Thanks @fuller-stack-dev.
-- **PR #106012** Related #105967.
-- **PR #98189** Thanks @Solvely-Colin.
-- **PR #106030** Related #105962.
-- **PR #106103** Thanks @vincentkoc.
-- **PR #106108** Thanks @vincentkoc.
-- **PR #105988** Related #105985.
-- **PR #105993** Thanks @fuller-stack-dev.
-- **PR #105156** Related #94688. Thanks @bdjben and @Gr4via.
-- **PR #105842**
-- **PR #106121** Thanks @fuller-stack-dev.
-- **PR #106109**
-- **PR #105958** Thanks @fuller-stack-dev.
-- **PR #106124**
-- **PR #106126** Thanks @vincentkoc.
-- **PR #95757** Related #91947. Thanks @bdjben and @guojiongming.
-- **PR #105850**
-- **PR #106117** Related #106076.
-- **PR #106095**
-- **PR #106132**
-- **PR #105814** Related #105741.
-- **PR #106099**
-- **PR #105674** Related #105672.
-- **PR #106097** Thanks @vincentkoc.
-- **PR #94416** Related #93501. Thanks @mushuiyu886 and @carsten19.
-- **PR #106139** Thanks @vincentkoc.
-- **PR #106045** Related #105968.
-- **PR #106033**
-- **PR #105914**
-- **PR #106011** Related #105960.
-- **PR #106007** Related #105998.
-- **PR #105882**
-- **PR #106129** Related #106118.
-- **PR #106111** Related #106013.
-- **PR #105970** Related #105959.
-- **PR #106125** Related #106123.
-- **PR #106040**
-- **PR #105987**
-- **PR #106049** Related #106047.
-- **PR #106089** Related #106082.
-- **PR #105888**
-- **PR #105951**
-- **PR #106074**
-- **PR #106144** Related #105923. Thanks @xydt-juyaohui and @moguangyu5-design.
-- **PR #106093** Related #106054.
-- **PR #106176** Related #105862. Thanks @momothemage and @asa1525.
-- **PR #106056** Thanks @pgondhi987.
-- **PR #106115** Related #106107.
-- **PR #106098**
-- **PR #106184** Thanks @vincentkoc.
-- **PR #106183** Related #106102.
-- **PR #105937**
-- **PR #106169** Related #106141.
-- **PR #106157**
-- **PR #106179** Related #106164.
-- **PR #106146** Related #106131.
-- **PR #106119**
-- **PR #104955** Related #104898. Thanks @wuqxuan and @altaywtf and @cmaldonado80.
-- **PR #106155**
-- **PR #106165**
-- **PR #106034** Thanks @Alix-007.
-- **PR #106057** Thanks @pgondhi987.
-- **PR #106010** Related #105980.
-- **PR #106044** Related #106043.
-- **PR #105904**
-- **PR #106094** Related #106085.
-- **PR #106175**
-- **PR #106090**
-- **PR #106114**
-- **PR #105838** Related #105759.
-- **PR #106002** Related #105971.
-- **PR #106039**
-- **PR #106217**
-- **PR #105855**
-- **PR #106214**
-- **PR #106151**
-- **PR #105875**
-- **PR #106225**
-- **PR #106160**
-- **PR #106222**
-- **PR #106193**
-- **PR #105939** Related #105920.
-- **PR #106196** Related #106158.
-- **PR #102984** Thanks @chengzhichao-xydt.
-- **PR #106228**
-- **PR #106237**
-- **PR #106234** Related #106219.
-- **PR #106221** Thanks @vincentkoc.
-- **PR #106205** Related #106185.
-- **PR #105928** Related #105843.
-- **PR #106195** Related #106194.
-- **PR #106240**
-- **PR #106230**
-- **PR #105865**
-- **PR #106105** Related #105431. Thanks @zhangqueping and @aniruddhaadak80.
-- **PR #106154** Related #106148.
-- **PR #104878** Related #104490. Thanks @ObliviateRickLin and @altaywtf and @smoe-bot.
-- **PR #97611** Thanks @RomneyDa and @altaywtf.
-- **PR #106247**
-- **PR #106256**
-- **PR #106253** Thanks @vincentkoc.
-- **PR #106257**
-- **PR #106242**
-- **PR #106263**
-- **PR #106113** Related #105963.
-- **PR #104123** Thanks @zhangguiping-xydt.
-- **PR #106197** Thanks @vincentkoc.
-- **PR #106133** Related #105924.
-- **PR #106252**
-- **PR #106243** Related #106233.
-- **PR #106210** Thanks @vincentkoc.
-- **PR #106265** Related #106245.
-- **PR #106046**
-- **PR #105921**
-- **PR #106055**
-- **PR #106016** Related #105996.
-- **PR #106275**
-- **PR #104893** Related #104865. Thanks @arcabotai and @Solvely-Colin.
-- **PR #106279**
-- **PR #106269**
-- **PR #106200**
-- **PR #106254**
-- **PR #106292**
-- **PR #104668** Thanks @jwest75674.
-- **PR #106289**
-- **PR #106260**
-- **PR #106301** Thanks @vincentkoc.
-- **PR #106174** Related #106138. Thanks @obviyus.
-- **PR #103211** Related #101720. Thanks @HOYALIM and @aniruddhaadak80.
-- **PR #106220**
-- **PR #106312**
-- **PR #106208** Related #106192.
-- **PR #106309** Related #106291.
-- **PR #106058**
-- **PR #106288** Related #106276.
-- **PR #106270** Related #106251.
-- **PR #106345** Related #106299.
-- **PR #106307** Related #106305.
-- **PR #106153**
-- **PR #105954** Thanks @qingminlong.
-- **PR #106353** Related #106343.
-- **PR #106281**
-- **PR #106366** Related #106348.
-- **PR #106367** Related #106363.
-- **PR #106322** Related #106321.
-- **PR #106223**
-- **PR #106356**
-- **PR #106267** Related #99087. Thanks @TheAngryPit.
-- **PR #106352** Related #106337.
-- **PR #106232**
-- **PR #106191**
-- **PR #106377**
-- **PR #106306**
-- **PR #106382** Related #106371.
-- **PR #106303** Related #106302.
-- **PR #106358**
-- **PR #102887** Related #102837. Thanks @wangyan2026 and @yetval.
-- **PR #106316** Related #106274.
-- **PR #106380**
-- **PR #106317** Thanks @vincentkoc.
-- **PR #106092**
-- **PR #106287** Related #106278.
-- **PR #106038**
-- **PR #106282**
-- **PR #106394** Thanks @vincentkoc.
-- **PR #106401**
-- **PR #103993** Related #99660. Thanks @TheAngryPit and @CassieMei.
-- **PR #106152** Related #105974. Thanks @wuqxuan.
-- **PR #106409**
-- **PR #106320**
-- **PR #106410** Related #106389.
-- **PR #106419**
-- **PR #106411** Thanks @vincentkoc.
-- **PR #106426**
-- **PR #106428** Related #106417.
-- **PR #106431** Thanks @vincentkoc.
-- **PR #105754** Related #102400. Thanks @oabdelmaksoud and @rodja.
-- **PR #106354** Related #106350.
-- **PR #106434**
-- **PR #106435** Related #105973.
-- **PR #106091** Related #106088.
-- **PR #106440** Thanks @vincentkoc.
-- **PR #106387** Related #106207.
-- **PR #106441** Related #106433.
-- **PR #106427**
-- **PR #106447** Thanks @vincentkoc.
-- **PR #106455**
-- **PR #106457** Thanks @shakkernerd.
-- **PR #106451** Related #106340.
-- **PR #106264** Thanks @IWhatsskill and @Solvely-Colin.
-- **PR #106459** Thanks @vincentkoc.
-- **PR #106462** Related #106446.
-- **PR #106290**
-- **PR #106168**
-- **PR #106463**
-- **PR #106211** Related #106186.
-- **PR #106476**
-- **PR #106478**
-- **PR #106481**
-- **PR #106488**
-- **PR #106492**
-- **PR #106470** Related #106326.
-- **PR #105460** Related #105675. Thanks @mushuiyu886 and @sallyom and @aniruddhaadak80.
-- **PR #106507**
-- **PR #106520**
-- **PR #106521**
-- **PR #106531**
-- **PR #106486**
-- **PR #106535**
-- **PR #106487**
-- **PR #106499** Thanks @vincentkoc.
-- **PR #106501**
-- **PR #106472** Related #106465.
-- **PR #106530**
-- **PR #106514** Related #106510.
-- **PR #105805** Thanks @lwy-2.
-- **PR #106537** Related #106493.
-- **PR #106286**
-- **PR #106255**
-- **PR #106324** Related #106268.
-- **PR #105557** Thanks @mushuiyu886.
-- **PR #106547**
-- **PR #106518** Related #106388.
-- **PR #106539**
-- **PR #106313** Related #106295.
-- **PR #106548** Related #106546.
-- **PR #106489** Related #106466.
-- **PR #106549** Thanks @vincentkoc.
-- **PR #106591**
-- **PR #106554**
-- **PR #103562** Related #102381. Thanks @cxbAsDev and @zuofengboss.
-- **PR #106590**
-- **PR #106522**
-- **PR #106550**
-- **PR #106592** Related #106589.
-- **PR #106593** Thanks @vincentkoc.
-- **PR #106544**
-- **PR #106600**
-- **PR #106525**
-- **PR #106552**
-- **PR #106634**
-- **PR #106632** Related #106602.
-- **PR #106543**
-- **PR #106639**
-- **PR #106285** Related #106280.
-- **PR #106620** Thanks @vincentkoc.
-- **PR #106615**
-- **PR #106508**
-- **PR #106601** Related #106597.
-- **PR #106672**
-- **PR #106689**
-- **PR #106495**
-- **PR #106691**
-- **PR #106642**
-- **PR #105922** Thanks @wahaha1223.
-- **PR #105885** Thanks @Alix-007.
-- **PR #106697**
-- **PR #106695** Related #106694.
-- **PR #106698**
-- **PR #106702**
-- **PR #105979** Related #105791.
-- **PR #106707** Related #106699.
-- **PR #106708**
-- **PR #106640**
-- **PR #106728**
-- **PR #106729** Related #106727.
-- **PR #106731**
-- **PR #106732**
-- **PR #106733**
-- **PR #106740**
-- **PR #106019**
-- **PR #106742**
-- **PR #106743**
-- **PR #106744** Related #106735.
-- **PR #106748**
-- **PR #106750**
-- **PR #106753** Related #106747.
-- **PR #106756**
-- **PR #106759**
-- **PR #106761**
-- **PR #106767**
-- **PR #106758** Related #106360.
-- **PR #106769** Related #106757.
-- **PR #106771**
-- **PR #106595** Related #106372.
-- **PR #102263** Related #99286. Thanks @Jaksenc and @iamyhzhao.
-- **PR #106782**
-- **PR #106784** Related #106770.
-- **PR #106787** Related #106785.
-- **PR #106794**
-- **PR #106801**
-- **PR #106802** Related #106795.
-- **PR #106805**
-- **PR #106751**
-- **PR #106807**
-- **PR #106808** Related #106804.
-- **PR #106811** Related #106809.
-- **PR #106816** Related #106812.
-- **PR #106798**
-- **PR #106820** Related #106817.
-- **PR #106823**
-- **PR #106821**
-- **PR #106828**
-- **PR #106764** Related #106745.
-- **PR #106534** Related #106218.
-- **PR #106772**
-- **PR #106827**
-- **PR #106783**
-- **PR #106692** Thanks @vincentkoc.
-- **PR #96738** Thanks @pdurlej.
-- **PR #106775**
-- **PR #106831** Related #106829.
-- **PR #106774**
-- **PR #106762**
-- **PR #106791**
-- **PR #106837** Thanks @vincentkoc.
-- **PR #106468** Thanks @vincentkoc.
-- **PR #106842**
-- **PR #106836**
-- **PR #106844** Related #106834.
-- **PR #106845**
-- **PR #106848**
-- **PR #106173** Thanks @wangmiao0668000666.
-- **PR #106853**
-- **PR #106857**
-- **PR #106856** Thanks @vincentkoc.
-- **PR #106800**
-- **PR #106858** Related #106847.
-- **PR #106633** Related #106511.
-- **PR #106861**
-- **PR #106773**
-- **PR #106605**
-- **PR #106868**
-- **PR #106867**
-- **PR #106741**
-- **PR #106852** Thanks @vincentkoc.
-- **PR #106871** Thanks @vincentkoc.
-- **PR #106874** Related #106860.
-- **PR #106879**
-- **PR #106328** Thanks @zhangguiping-xydt.
-- **PR #106878** Thanks @vincentkoc.
-- **PR #106198** Related #106170. Thanks @galiniliev.
-- **PR #105576** Thanks @mcaxtr.
-- **PR #106883**
-- **PR #106887**
-- **PR #105574** Thanks @mcaxtr.
-- **PR #106892**
-- **PR #106884** Thanks @joshavant.
-- **PR #106872**
-- **PR #106896**
-- **PR #106900** Thanks @vincentkoc.
-- **PR #106895**
-- **PR #106898**
-- **PR #106904**
-- **PR #106424** Thanks @Leon-SK668.
-- **PR #106906**
-- **PR #106917**
-- **PR #106915**
-- **PR #106596** Related #106430. Thanks @wuqxuan and @alexai-hnt.
-- **PR #106919**
-- **PR #106236** Thanks @ZengWen-DT.
-- **PR #106924**
-- **PR #106880**
-- **PR #106901**
-- **PR #106925**
-- **PR #106886**
-- **PR #106909** Thanks @vincentkoc.
-- **PR #105579** Thanks @mcaxtr.
-- **PR #106929**
-- **PR #106931**
-- **PR #106934** Thanks @vincentkoc.
-- **PR #106936**
-- **PR #106865** Related #106266.
-- **PR #106881** Thanks @vincentkoc.
-- **PR #106938**
-- **PR #106918**
-- **PR #106873**
-- **PR #106944** Thanks @vincentkoc.
-- **PR #106947**
-- **PR #106439** Thanks @sunlit-deng.
-- **PR #106928**
-- **PR #106950** Thanks @vincentkoc.
-- **PR #106949**
-- **PR #106921** Related #106876.
-- **PR #106956**
-- **PR #106954**
-- **PR #106955** Thanks @vincentkoc.
-- **PR #103290** Related #103262. Thanks @tzy-17 and @yetval.
-- **PR #106939**
-- **PR #106964**
-- **PR #106603** Thanks @he-yufeng.
-- **PR #106846**
-- **PR #106965** Thanks @vincentkoc.
-- **PR #106973** Thanks @vincentkoc.
-- **PR #106974**
-- **PR #106978**
-- **PR #106979** Related #106966.
-- **PR #106425** Thanks @Leon-SK668.
-- **PR #106991**
-- **PR #106990**
-- **PR #106972**
-- **PR #106993**
-- **PR #106553** Thanks @sebastian-openclaw.
-- **PR #106992** Thanks @vincentkoc.
-- **PR #106953** Thanks @vincentkoc.
-- **PR #106970**
-- **PR #106968**
-- **PR #106975**
-- **PR #107007**
-- **PR #107003**
-- **PR #107016**
-- **PR #107014**
-- **PR #107013** Thanks @vincentkoc.
-- **PR #107018**
-- **PR #107008**
-- **PR #107027** Thanks @vincentkoc.
-- **PR #107020**
-- **PR #107039**
-- **PR #107022**
-- **PR #106962**
-- **PR #107011**
-- **PR #104070** Thanks @zhangguiping-xydt.
-- **PR #107015**
-- **PR #107042**
-- **PR #107002** Related #97563, #103076. Thanks @jarvis-drakon and @shad0wca7.
-- **PR #107044**
-- **PR #107051**
-- **PR #107048** Thanks @vincentkoc.
-- **PR #107055**
-- **PR #107056**
-- **PR #107062**
-- **PR #107064**
-- **PR #107057**
-- **PR #107071**
-- **PR #107075**
-- **PR #107078**
-- **PR #107083**
-- **PR #107077** Thanks @vincentkoc.
-- **PR #107084**
-- **PR #107088**
-- **PR #107095**
-- **PR #107097**
-- **PR #107096** Thanks @vincentkoc.
-- **PR #107098**
-- **PR #107100**
-- **PR #107079**
-- **PR #107038** Thanks @fuller-stack-dev.
-- **PR #107041**
-- **PR #107110**
-- **PR #107047**
-- **PR #106981**
-- **PR #107054**
-- **PR #107059**
-- **PR #107113** Thanks @vincentkoc.
-- **PR #107120**
-- **PR #107126**
-- **PR #107109**
-- **PR #107124**
-- **PR #107087** Related #103057. Thanks @yetval.
-- **PR #106926** Thanks @mushuiyu886 and @wangmiao0668000666.
-- **PR #107102**
-- **PR #106986** Thanks @zhangguiping-xydt.
-- **PR #107130**
-- **PR #107135**
-- **PR #107111** Related #107085.
-- **PR #107128**
-- **PR #106951** Related #106948. Thanks @moguangyu5-design.
-- **PR #107107**
-- **PR #106952** Thanks @zenglingbiao.
-- **PR #107134**
-- **PR #107131** Thanks @vincentkoc.
-- **PR #107115**
-- **PR #107140** Thanks @vincentkoc.
-- **PR #107040** Thanks @hannesrudolph.
-- **PR #107116** Related #107106.
-- **PR #107147**
-- **PR #107148**
-- **PR #107123**
-- **PR #107146** Thanks @vincentkoc.
-- **PR #107142**
-- **PR #107156**
-- **PR #107150**
-- **PR #104259** Thanks @yyj-xydt.
-- **PR #107151**
-- **PR #107157**
-- **PR #106995** Thanks @joshavant.
-- **PR #107072** Thanks @zhangguiping-xydt.
-- **PR #107165**
-- **PR #106384** Thanks @ZengWen-DT and @wangmiao0668000666.
-- **PR #107169**
-- **PR #107168**
-- **PR #107101**
-- **PR #107178**
-- **PR #107189**
-- **PR #107190**
-- **PR #96554** Thanks @ruizcrp.
-- **PR #107196**
-- **PR #107197**
-- **PR #107194**
-- **PR #107177**
-- **PR #107201**
-- **PR #107206**
-- **PR #107210**
-- **PR #107186**
-- **PR #107213**
-- **PR #107217**
-- **PR #107173**
-- **PR #107204**
-- **PR #107231**
-- **PR #107181**
-- **PR #107212**
-- **PR #107208**
-- **PR #107233**
-- **PR #107235**
-- **PR #107050** Related #105512.
-- **PR #107198**
-- **PR #107241**
-- **PR #107232**
-- **PR #103918** Thanks @mmaps and @pgondhi987.
-- **PR #107245**
-- **PR #107167**
-- **PR #107162** Related #107112.
-- **PR #107247**
-- **PR #103914** Thanks @mmaps and @pgondhi987.
-- **PR #107249**
-- **PR #107254**
-- **PR #107259**
-- **PR #107270**
-- **PR #107166** Related #107153.
-- **PR #107242**
-- **PR #107264**
-- **PR #107260**
-- **PR #107252**
-- **PR #107284**
-- **PR #107009** Related #104804.
-- **PR #107286**
-- **PR #107275**
-- **PR #107253**
-- **PR #107287**
-- **PR #107282**
-- **PR #107122** Thanks @wahaha1223.
-- **PR #107291**
-- **PR #107293**
-- **PR #107296**
-- **PR #107298**
-- **PR #107307**
-- **PR #107301**
-- **PR #107272**
-- **PR #101253** Thanks @RomneyDa.
-- **PR #107312**
-- **PR #107310**
-- **PR #107319**
-- **PR #107321**
-- **PR #107326**
-- **PR #107328**
-- **PR #107331**
-- **PR #107238** Related #106875. Thanks @SL4N and @dr00-eth.
-- **PR #107316**
-- **PR #106498** Thanks @hugenshen.
-- **PR #107332**
-- **PR #99404** Thanks @snowzlmbot.
-- **PR #102271** Thanks @RomneyDa.
-- **PR #107340**
-- **PR #107342**
-- **PR #105001** Thanks @zhangguiping-xydt.
-- **PR #107345**
-- **PR #107338**
-- **PR #107311**
-- **PR #107353**
-- **PR #107351**
-- **PR #107337**
-- **PR #107354**
-- **PR #107357**
-- **PR #107370**
-- **PR #107379**
-- **PR #107380**
-- **PR #107383**
-- **PR #106997**
-- **PR #107385**
-- **PR #107387**
-- **PR #107336** Related #107318.
-- **PR #107390**
-- **PR #107392**
-- **PR #107382**
-- **PR #107396**
-- **PR #107356**
-- **PR #107371**
-- **PR #107398**
-- **PR #107395**
-- **PR #107400**
-- **PR #107377**
-- **PR #107381**
-- **PR #107373**
-- **PR #107407**
-- **PR #107405**
-- **PR #107412**
-- **PR #107414**
-- **PR #107417**
-- **PR #107420**
-- **PR #107421**
-- **PR #107427**
-- **PR #107428**
-- **PR #107431**
-- **PR #107432**
-- **PR #107435**
-- **PR #107438**
-- **PR #107436**
-- **PR #107440**
-- **PR #107443**
-- **PR #107445**
-- **PR #107411**
-- **PR #107444**
-- **PR #107372**
-- **PR #99051** Related #98805.
-- **PR #107455**
-- **PR #107456**
-- **PR #107457**
-- **PR #107424**
-- **PR #107460**
-- **PR #107459**
-- **PR #105886** Thanks @Alix-007.
-- **PR #107462** Thanks @vincentkoc.
-- **PR #107470**
-- **PR #107472**
-- **PR #107475**
-- **PR #107476**
-- **PR #107483**
-- **PR #107485**
-- **PR #107402**
-- **PR #107540**
-- **PR #107542**
-- **PR #107545**
-- **PR #107548**
-- **PR #104216** Thanks @zhangguiping-xydt.
-- **PR #107553**
-- **PR #107554**
-- **PR #107560**
-- **PR #107567**
-- **PR #107569**
-- **PR #107563**
-- **PR #107570**
-- **PR #107369** Thanks @pash-openai.
-- **PR #107572**
-- **PR #107576**
-- **PR #107578**
-- **PR #106066** Thanks @zhangguiping-xydt.
-- **PR #107451**
-- **PR #107043**
-- **PR #102068** Related #101789. Thanks @tzy-17 and @jwest75674.
-- **PR #107583**
-- **PR #107584**
-- **PR #107585**
-- **PR #107561**
-- **PR #102114** Thanks @wm0018.
-- **PR #107594**
-- **PR #89821** Thanks @BunsDev.
-- **PR #107602**
-- **PR #107481**
-- **PR #107573**
-- **PR #107599**
-- **PR #107612**
-- **PR #106035** Thanks @Alix-007.
-- **PR #107618**
-- **PR #107621**
-- **PR #78022** Thanks @fransqaas.
-- **PR #107613**
-- **PR #107229** Thanks @fuller-stack-dev.
-- **PR #107606**
-- **PR #107640**
-- **PR #107636**
-- **PR #107234** Thanks @wahaha1223 and @cursoragent.
-- **PR #104708** Related #102391. Thanks @VACInc and @yetval.
-- **PR #107652**
-- **PR #107654**
-- **PR #107646**
-- **PR #107364** Related #107289.
-- **PR #107191** Thanks @qingminglong.
-- **PR #107653**
-- **PR #107625** Related #107624.
-- **PR #107616**
-- **PR #107665**
-- **PR #107675**
-- **PR #107678**
-- **PR #107598**
-- **PR #107674** Related #107669.
-- **PR #104120** Thanks @Alix-007.
-- **PR #107689**
-- **PR #107695**
-- **PR #107696**
-- **PR #107677**
-- **PR #107692**
-- **PR #107631**
-- **PR #107680**
-- **PR #107320**
-- **PR #107706**
-- **PR #107673**
-- **PR #107709**
-- **PR #107710** Thanks @shakkernerd.
-- **PR #107714**
-- **PR #107715**
-- **PR #107716**
-- **PR #107724**
-- **PR #107726**
-- **PR #107697** Related #107685.
-- **PR #107730**
-- **PR #107723**
-- **PR #107728**
-- **PR #94494** Related #94482. Thanks @xialonglee and @aaronedell.
-- **PR #107733**
-- **PR #99394** Related #97074. Thanks @xialonglee and @Lvan185.
-- **PR #107737**
-- **PR #107747**
-- **PR #107749**
-- **PR #107642**
-- **PR #107748**
-- **PR #107745**
-- **PR #107753**
-- **PR #107740**
-- **PR #107756**
-- **PR #107738**
-- **PR #107757**
-- **PR #107758**
-- **PR #107617** Thanks @mushuiyu886.
-- **PR #107760**
-- **PR #104901** Thanks @zhangguiping-xydt.
-- **PR #107763**
-- **PR #107767**
-- **PR #107759** Related #107755.
-- **PR #107454** Thanks @wahaha1223.
-- **PR #107774**
-- **PR #107775**
-- **PR #107776**
-- **PR #107772**
-- **PR #106484** Thanks @hugenshen.
-- **PR #104940** Related #104762. Thanks @jackjin1997.
-- **PR #107779**
-- **PR #107768**
-- **PR #107777** Related #107769.
-- **PR #107784**
-- **PR #107781**
-- **PR #104629** Thanks @hugenshen.
-- **PR #107783**
-- **PR #105066** Thanks @qingminglong.
-- **PR #107762**
-- **PR #107634**
-- **PR #107780**
-- **PR #107796**
-- **PR #107789** Related #107766.
-- **PR #107764**
-- **PR #107807** Related #107684. Thanks @shakkernerd.
-- **PR #107808**
-- **PR #107801**
-- **PR #107791** Related #107782.
-- **PR #101708** Thanks @Pick-cat.
-- **PR #107817**
-- **PR #107806**
-- **PR #107819**
-- **PR #107826**
-- **PR #107633**
-- **PR #107794** Thanks @fuller-stack-dev.
-- **PR #107827**
-- **PR #107799** Related #106594. Thanks @joshavant and @lockhartheavyindustries.
-- **PR #107828**
-- **PR #107830**
-- **PR #104824** Thanks @yetval.
-- **PR #107803** Thanks @fuller-stack-dev and @jalehman.
-- **PR #107822**
-- **PR #107809** Thanks @fuller-stack-dev and @jalehman.
-- **PR #107837**
-- **PR #107838**
-- **PR #107848** Related #107840.
-- **PR #107849**
-- **PR #107793**
-- **PR #107294** Related #106604. Thanks @harjothkhara and @Cyb3rb1ade.
-- **PR #107859**
-- **PR #107854**
-- **PR #107858**
-- **PR #107862** Thanks @fuller-stack-dev.
-- **PR #107844**
-- **PR #107754** Related #98633, #102932, #105427. Thanks @joshavant and @ooiuuii and @aniruddhaadak80.
-- **PR #107836** Thanks @fuller-stack-dev.
-- **PR #107869**
-- **PR #107870**
-- **PR #107884**
-- **PR #107874**
-- **PR #107471**
-- **PR #107887**
-- **PR #107893** Thanks @shakkernerd.
-- **PR #107865**
-- **PR #107892**
-- **PR #107900**
-- **PR #107820** Related #107818. Thanks @jalehman.
-- **PR #107898**
-- **PR #107773** Related #107770. Thanks @joshavant.
-- **PR #107907** Thanks @shakkernerd.
-- **PR #107912**
-- **PR #107913**
-- **PR #107798** Related #107797.
-- **PR #107923**
-- **PR #107924**
-- **PR #107688** Related #107627.
-- **PR #95996** Thanks @kklouzal and @fuller-stack-dev.
-- **PR #107906**
-- **PR #107936**
-- **PR #107940** Thanks @hannesrudolph.
-- **PR #107949**
-- **PR #107951**
-- **PR #107953**
-- **PR #107954**
-- **PR #107932**
-- **PR #107927**
-- **PR #107908**
-- **PR #107965** Thanks @shakkernerd.
-- **PR #107966**
-- **PR #107699** Thanks @Alix-007.
-- **PR #107938**
-- **PR #107700** Thanks @Alix-007.
-- **PR #107701** Thanks @Alix-007.
-- **PR #107702** Thanks @Alix-007.
-- **PR #107973**
-- **PR #107960**
-- **PR #107543** Thanks @mcaxtr.
-- **PR #107778** Related #107736. Thanks @jincheng-xydt and @crash2kx.
-- **PR #106959**
-- **PR #107786**
-- **PR #107993**
-- **PR #107987**
-- **PR #108003**
-- **PR #107997** Related #107992.
-- **PR #107604** Related #105683. Thanks @lee-xydt and @aniruddhaadak80.
-- **PR #108008**
-- **PR #107317** Thanks @zhangguiping-xydt.
-- **PR #107961** Thanks @Patrick-Erichsen.
-- **PR #107771** Related #106933. Thanks @ekinnee and @montajebii.
-- **PR #104516** Thanks @Monkey-wusky.
-- **PR #107066** Thanks @mcaxtr.
-- **PR #108013**
-- **PR #108017**
-- **PR #107989** Related #104108. Thanks @ObliviateRickLin and @yetval.
-- **PR #106473** Thanks @sunlit-deng.
-- **PR #107977**
-- **PR #107969**
-- **PR #107955**
-- **PR #105470** Thanks @qingminlong.
-- **PR #107063** Related #106189. Thanks @mushuiyu886 and @aaajiao.
-- **PR #106826** Related #106379. Thanks @snowzlmbot.
-- **PR #107976**
-- **PR #107983**
-- **PR #108020**
-- **PR #106293** Thanks @qingminglong and @omarshahine.
-- **PR #107285** Thanks @xydt-tanshanshan.
-- **PR #107703** Thanks @Alix-007.
-- **PR #107970** Related #107952.
-- **PR #108004**
-- **PR #107985**
-- **PR #108026**
-- **PR #108022**
-- **PR #107948**
-- **PR #106397** Thanks @Alix-007.
-- **PR #105584** Related #103078. Thanks @yetval.
-- **PR #107926** Related #107850.
-- **PR #107894**
-- **PR #108038**
-- **PR #108037**
-- **PR #108018** Related #108016.
-- **PR #107718** Thanks @Leon-SK668.
-- **PR #107393** Thanks @ZengWen-DT.
-- **PR #108040**
-- **PR #108045**
-- **PR #104853** Thanks @VectorPeak.
-- **PR #108052** Thanks @RomneyDa.
-- **PR #108041**
-- **PR #108043**
-- **PR #108048**
-- **PR #106737** Thanks @IWhatsskill.
-- **PR #108051**
-- **PR #108046**
-- **PR #107881** Thanks @RomneyDa.
-- **PR #106395** Thanks @Alix-007.
-- **PR #108054**
-- **PR #106994** Related #106870.
-- **PR #108057** Related #108055.
-- **PR #108047**
-- **PR #108067**
-- **PR #108032**
-- **PR #108058**
-- **PR #103369** Thanks @Alix-007.
-- **PR #108076**
-- **PR #108042** Related #106556, #106778. Thanks @nocode-ananas and @sebastian-openclaw.
-- **PR #108062** Related #108027, #108028.
-- **PR #108015** Thanks @RomneyDa.
-- **PR #107863** Related #107526. Thanks @ZengWen-DT and @aniruddhaadak80.
-- **PR #108078**
-- **PR #104430** Thanks @yetval.
-- **PR #108034**
-- **PR #108099**
-- **PR #108095**
-- **PR #107404** Thanks @IWhatsskill.
-- **PR #108093**
-- **PR #107717** Thanks @Leon-SK668.
-- **PR #108096**
-- **PR #108090**
-- **PR #107638** Thanks @sunlit-deng.
-- **PR #108111**
-- **PR #105381** Related #105380. Thanks @edenfunf.
-- **PR #108108**
-- **PR #92294** Thanks @yetval.
-- **PR #108112**
-- **PR #108118**
-- **PR #108113**
-- **PR #108035**
-- **PR #108125**
-- **PR #108105** Related #95597, #97913, #99268, #106277. Thanks @viernesmybot and @100yenadmin and @obviyus and @xudonggang123.
-- **PR #108132**
-- **PR #108123** Related #108097, #108098.
-- **PR #108139**
-- **PR #108121**
-- **PR #108100** Related #107290. Thanks @woohahahaaa.
-- **PR #108129**
-- **PR #108009** Thanks @miorbnli.
-- **PR #107719** Thanks @Leon-SK668.
-- **PR #108101** Thanks @Leon-SK668.
-- **PR #108091**
-- **PR #108094** Thanks @QiuYuang.
-- **PR #107478** Thanks @wangmiao0668000666.
-- **PR #108150**
-- **PR #103589** Thanks @RomneyDa.
-- **PR #108138**
-- **PR #108115**
-- **PR #108122** Thanks @yetval.
-- **PR #108159** Thanks @hannesrudolph.
-- **PR #108162**
-- **PR #108137**
-- **PR #108170**
-- **PR #108158** Thanks @RomneyDa.
-- **PR #108146**
-- **PR #103604** Thanks @RomneyDa.
-- **PR #108081**
-- **PR #108169**
-- **PR #108171**
-- **PR #108179**
-- **PR #108173**
-- **PR #108147** Related #102930. Thanks @yungchentang and @aniruddhaadak80.
-- **PR #108074**
-- **PR #107903**
-- **PR #108145** Thanks @ZengWen-DT.
-- **PR #108019** Thanks @mushuiyu886.
-- **PR #108191**
-- **PR #108102** Thanks @Leon-SK668.
-- **PR #108151** Thanks @mushuiyu886.
-- **PR #108181**
-- **PR #108201**
-- **PR #107986** Thanks @obviyus.
-- **PR #108203**
-- **PR #108219**
-- **PR #108202**
-- **PR #108221**
-- **PR #108210**
-- **PR #108223**
-- **PR #108130** Thanks @qingminglong.
-- **PR #108227**
-- **PR #108205**
-- **PR #108234**
-- **PR #108228**
-- **PR #108248**
-- **PR #108207**
-- **PR #108214**
-- **PR #108164** Thanks @Alix-007.
-- **PR #108239**
-- **PR #108243**
-- **PR #108240** Thanks @Leon-SK668.
-- **PR #108153**
-- **PR #86386** Related #48949. Thanks @larry-xue and @AndrzejXIAO.
-- **PR #97827** Related #95109. Thanks @VACInc and @kzzalews.
-- **PR #105780** Related #105787. Thanks @morluto.
-- **PR #108260**
-- **PR #107442**
-- **PR #95729** Thanks @Pick-cat and @altaywtf.
-- **PR #108259**
-- **PR #108254** Related #96815, #100556, #106375. Thanks @xxw77 and @CryptoKylan and @ximanuki.
-- **PR #108264** Thanks @obviyus.
-- **PR #108261**
-- **PR #108266**
-- **PR #108275**
-- **PR #108189** Thanks @RomneyDa.
-- **PR #108282**
-- **PR #108279** Thanks @RomneyDa.
-- **PR #108271** Thanks @shakkernerd.
-- **PR #108285**
-- **PR #97224** Thanks @marchpure.
-- **PR #108295**
-- **PR #102903** Thanks @chengzhichao-xydt.
-- **PR #108230** Thanks @QiuYuang.
-- **PR #108309**
-- **PR #108308**
-- **PR #103582** Related #103551. Thanks @lin-hongkuan and @obviyus.
-- **PR #107731** Related #107425. Thanks @wuqxuan and @Countermarch.
-- **PR #108290** Related #108289.
-- **PR #108301**
-- **PR #108296** Thanks @RomneyDa.
-- **PR #108317**
-- **PR #108325**
-- **PR #108311** Related #106719, #107305. Thanks @aniruddhaadak80 and @Kenmege.
-- **PR #108247**
-- **PR #108110** Related #107933. Thanks @Last-emo-boy.
-- **PR #108334**
-- **PR #108332** Thanks @shakkernerd.
-- **PR #108338**
-- **PR #108336** Related #107219, #107226, #107842. Thanks @marius-stauchner and @Marvinthebored and @Kian-Thomas-West.
-- **PR #108347**
-- **PR #107802** Related #107746. Thanks @jincheng-xydt and @kostrse.
-- **PR #108340**
-- **PR #108354** Related #98348, #107172, #107497. Thanks @billcshi and @collinsman and @aniruddhaadak80.
-- **PR #106803** Thanks @IWhatsskill.
-- **PR #107574** Thanks @IWhatsskill.
-- **PR #108199** Thanks @IWhatsskill.
-- **PR #108307** Thanks @IWhatsskill.
-- **PR #108363**
-- **PR #108346** Related #108318.
-- **PR #106538** Thanks @Pick-cat.
-- **PR #108376**
-- **PR #103116** Thanks @Leon-SK668.
-- **PR #104968** Thanks @wings1029.
-- **PR #108371**
-- **PR #108212** Related #108186. Thanks @lsr911 and @ooiuuii.
-- **PR #108390**
-- **PR #108157** Thanks @Alix-007.
-- **PR #108381** Related #108366.
-- **PR #104966** Thanks @wings1029.
-- **PR #108343** Thanks @RomneyDa.
-- **PR #108380**
-- **PR #89745** Related #89709. Thanks @TurboTheTurtle and @syfvb.
-- **PR #108375** Related #108288.
-- **PR #108400**
-- **PR #105089** Thanks @zw-xysk.
-- **PR #108377**
-- **PR #108385**
-- **PR #105556** Thanks @zw-xysk.
-- **PR #108410**
-- **PR #108415**
-- **PR #108414**
-- **PR #108398** Related #107962, #107964.
-- **PR #108417**
-- **PR #106497** Thanks @hugenshen and @Solvely-Colin.
-- **PR #102698** Thanks @zhangguiping-xydt and @RomneyDa.
-- **PR #104663** Thanks @Alix-007.
-- **PR #108437**
-- **PR #108426**
-- **PR #108416**
-- **PR #108024**
-- **PR #103294** Related #108399. Thanks @xydt-tanshanshan.
-- **PR #108430** Thanks @RomneyDa.
-- **PR #108418** Thanks @RomneyDa.
-- **PR #108450**
-- **PR #108420**
-- **PR #108451**
-- **PR #108429** Thanks @RomneyDa.
-- **PR #108454**
-- **PR #108424**
-- **PR #108448**
-- **PR #108458**
-- **PR #108457** Related #108445.
-- **PR #108433** Thanks @joshavant.
-- **PR #108468**
-- **PR #108463** Thanks @RomneyDa.
-- **PR #108467** Thanks @RomneyDa.
-- **PR #108472**
-- **PR #108476**
-- **PR #108434** Related #108431. Thanks @joshavant.
-- **PR #108481**
-- **PR #108386**
-- **PR #108478**
-- **PR #108479** Thanks @RomneyDa.
-- **PR #108484**
-- **PR #108253** Thanks @sunlit-deng.
-- **PR #108422**
-- **PR #108480**
-- **PR #108483**
-- **PR #108365** Thanks @zhangguiping-xydt.
-- **PR #108127** Thanks @sunlit-deng.
-- **PR #108492**
-- **PR #108493**
-- **PR #108497**
-- **PR #108487** Related #106961. Thanks @joshavant and @bruhsh.
-- **PR #108500**
-- **PR #108503**
-- **PR #108464** Thanks @RomneyDa.
-- **PR #108419**
-- **PR #108160** Thanks @qingminglong.
-- **PR #105793** Thanks @morluto.
-- **PR #108515**
-- **PR #108465** Thanks @RomneyDa.
-- **PR #108516**
-- **PR #108204** Thanks @zhangguiping-xydt.
-- **PR #108521**
-- **PR #108523**
-- **PR #108510** Related #108507.
-- **PR #108504**
-- **PR #108513**
-- **PR #108512** Thanks @yyj-xydt.
-- **PR #108538**
-- **PR #104836** Thanks @Alix-007.
-- **PR #108518** Thanks @zhangguiping-xydt.
-- **PR #108547**
-- **PR #108268** Thanks @mushuiyu886.
-- **PR #108163** Thanks @Alix-007.
-- **PR #108258** Related #108250. Thanks @goutamadwant and @j7l9.
-- **PR #108499**
-- **PR #108531** Thanks @RomneyDa.
-- **PR #108539** Thanks @RomneyDa.
-- **PR #108564**
-- **PR #108563**
-- **PR #108589**
-- **PR #108423** Related #103636. Thanks @joshavant and @andududu.
-- **PR #108583**
-- **PR #108594**
-- **PR #108603** Related #108595.
-- **PR #108609**
-- **PR #108612**
-- **PR #108611**
-- **PR #108617** Thanks @fuller-stack-dev.
-- **PR #108508** Related #107933.
-- **PR #108620** Related #108610.
-- **PR #108597**
-- **PR #108615** Related #108600.
-- **PR #108626** Related #99270, #105184, #107447. Thanks @obviyus and @sgh6688 and @compoodment.
-- **PR #108505**
-- **PR #108628** Related #108595.
-- **PR #108627** Related #108608.
-- **PR #108633**
-- **PR #108394** Thanks @keshavbotagent and @obviyus.
-- **PR #108165** Thanks @Alix-007.
-- **PR #108592**
-- **PR #108161** Thanks @Alix-007.
-- **PR #108292** Thanks @qingminglong.
-- **PR #107883** Thanks @wahaha1223.
-- **PR #108551** Related #108550. Thanks @moguangyu5-design.
-- **PR #108641**
-- **PR #108166** Thanks @Alix-007.
-- **PR #108403** Thanks @SunnyShu0925.
-- **PR #108638**
-- **PR #108546** Thanks @krissding.
-- **PR #108064** Thanks @Alix-007.
-- **PR #108605** Related #108604.
-- **PR #108065** Thanks @Alix-007.
-- **PR #108063** Thanks @Alix-007.
-- **PR #108606** Thanks @Alix-007.
-- **PR #108648**
-- **PR #108616** Thanks @Alix-007.
-- **PR #108621** Thanks @Alix-007.
-- **PR #108283**
-- **PR #108619** Thanks @Alix-007.
-- **PR #106396** Thanks @Alix-007.
-- **PR #105893** Thanks @Alix-007.
-- **PR #106100** Related #105433. Thanks @MoerAI and @aniruddhaadak80.
-- **PR #108575** Thanks @RomneyDa.
-- **PR #108537** Thanks @RomneyDa.
-- **PR #108679** Related #108659.
-- **PR #108652** Related #107220. Thanks @liewjiajun.
-- **PR #108674**
-- **PR #108630** Related #108511. Thanks @zhangguiping-xydt and @snotty.
-- **PR #106398** Thanks @Alix-007.
-- **PR #108405** Thanks @IWhatsskill.
-- **PR #108634** Thanks @joshavant.
-- **PR #108103** Thanks @Leon-SK668.
-- **PR #108636** Related #108598. Thanks @hosanxiv and @lamkan0210.
-- **PR #108197** Related #108196. Thanks @xianshishan.
-- **PR #108167**
-- **PR #107619** Thanks @Pick-cat.
-- **PR #108455** Related #107415. Thanks @harjothkhara and @rodja.
-- **PR #108669** Thanks @fuller-stack-dev.
-- **PR #104841** Thanks @Alix-007.
-- **PR #107325** Thanks @maweibin.
-- **PR #107720** Thanks @Leon-SK668.
-- **PR #107346** Thanks @ZengWen-DT.
-- **PR #108717**
-- **PR #108715**
-- **PR #108661** Related #107224. Thanks @foxrainhy.
-- **PR #108643**
-- **PR #108680** Related #104977. Thanks @yetval.
-- **PR #104288** Thanks @Alix-007.
-- **PR #106850** Related #106824. Thanks @wuqxuan and @yetval.
-- **PR #104835** Thanks @Alix-007.
-- **PR #108696**
-- **PR #108721**
-- **PR #108668** Related #106920. Thanks @zyc-sudo.
-- **PR #95010** Thanks @zats.
-- **PR #106393** Thanks @zenglingbiao.
-- **PR #108697** Related #104721. Thanks @amknight and @SunnyShu0925 and @dennisd-hub.
-- **PR #108646**
-- **PR #107751** Related #107416. Thanks @wsyjh8 and @pipe-gale01.
-- **PR #95480** Related #89231. Thanks @mikasa0818 and @CameronWeller.
-- **PR #108728**
-- **PR #108651**
-- **PR #108440**
-- **PR #108682** Related #108428. Thanks @yetval.
-- **PR #106036** Thanks @Alix-007.
-- **PR #108714** Related #108244. Thanks @Jeehut.
-- **PR #108736**
-- **PR #107847** Related #107846. Thanks @ooiuuii.
-- **PR #108649** Related #107224. Thanks @foxrainhy.
-- **PR #108672** Thanks @Alix-007.
-- **PR #107610** Thanks @hugenshen.
-- **PR #108745**
-- **PR #108650** Thanks @Alix-007.
-- **PR #108602** Thanks @RomneyDa.
-- **PR #105240** Thanks @zhangguiping-xydt and @Solvely-Colin.
-- **PR #108725**
-- **PR #106456** Thanks @Pick-cat.
-- **PR #106416** Related #106408. Thanks @baanish.
-- **PR #107644** Related #107579. Thanks @yu-xin-c and @oc-jarvis.
-- **PR #105263** Related #105187. Thanks @NianJiuZst and @aniruddhaadak80.
-- **PR #108752**
-- **PR #108739**
-- **PR #108694**
-- **PR #108756** Related #108753.
-- **PR #108750**
-- **PR #106376** Related #105523. Thanks @xialonglee and @Evgeniy-Rodin.
-- **PR #108330** Thanks @Pick-cat.
-- **PR #107735** Related #102206. Thanks @joshavant and @solavrc.
-- **PR #108678** Related #107682. Thanks @yetval.
-- **PR #108241** Thanks @NianJiuZst.
-- **PR #106485** Thanks @hugenshen.
-- **PR #108768**
-- **PR #108685** Thanks @Alix-007.
-- **PR #108775**
-- **PR #108700** Thanks @Alix-007.
-- **PR #108663**
-- **PR #108763**
-- **PR #108744** Related #108286. Thanks @jamiezigelbaum.
-- **PR #108780**
-- **PR #108778**
-- **PR #93293** Related #84139. Thanks @mushuiyu886 and @MarkMa84.
-- **PR #108772**
-- **PR #108765**
-- **PR #108351** Related #96163. Thanks @edenfunf and @tancolo.
-- **PR #105978** Thanks @zw-xysk.
-- **PR #108743** Thanks @Alix-007.
-- **PR #108770**
-- **PR #108760**
-- **PR #106541** Thanks @Pick-cat and @cursoragent.
-- **PR #108683** Related #95131, #105445, #107262. Thanks @a-m-a-r-a and @laurenceputra and @ndj888.
-- **PR #108701** Thanks @Alix-007.
-- **PR #106407** Thanks @zenglingbiao.
-- **PR #108699** Thanks @Alix-007.
-- **PR #108698** Thanks @Alix-007.
-- **PR #108543** Related #108535.
-- **PR #96267** Thanks @snowzlmbot.
-- **PR #108766** Thanks @Alix-007.
-- **PR #108785**
-- **PR #108755** Thanks @Alix-007.
-- **PR #107691** Related #107467. Thanks @LeonidasLux and @Valkster70.
-- **PR #108787**
-- **PR #108548** Thanks @VectorPeak.
-- **PR #108741** Thanks @Alix-007.
-- **PR #108667** Thanks @RileyJJY.
-- **PR #105544** Thanks @abnershang.
-- **PR #108718** Thanks @Alix-007.
-- **PR #108576** Thanks @zhangguiping-xydt.
-- **PR #108723** Thanks @Alix-007.
-- **PR #106864** Related #106863. Thanks @LeC-D.
-- **PR #108584** Related #107628. Thanks @joshavant and @ostehost.
-- **PR #108758**
-- **PR #108735**
-- **PR #108853**
-- **PR #108857**
-- **PR #108596** Thanks @wahaha1223.
-- **PR #108578** Related #108571. Thanks @zhanxingxin1998.
-- **PR #108875**
-- **PR #108791** Thanks @Alix-007.
-- **PR #108807**
-- **PR #108870**
-- **PR #108561** Thanks @wangmiao0668000666.
-- **PR #108879**
-- **PR #108886**
-- **PR #108805** Thanks @Alix-007.
-- **PR #108556** Related #108524. Thanks @arkyu2077 and @JasmineZhangHM and @yetval.
-- **PR #95722** Thanks @Pick-cat.
-- **PR #108798**
-- **PR #108655** Thanks @Monkey-wusky.
-- **PR #105724** Related #104806. Thanks @algal.
-- **PR #108838**
-- **PR #108810** Thanks @Alix-007.
-- **PR #108730** Related #108427. Thanks @mushuiyu886 and @yetval.
-- **PR #108657** Thanks @yyj-xydt.
-- **PR #107979** Thanks @fuller-stack-dev.
-- **PR #103799** Related #103590. Thanks @lonexreb and @MoChouBlog.
-- **PR #106799** Thanks @henkterharmsel.
-- **PR #101730** Thanks @zhangguiping-xydt.
-- **PR #108871** Related #108786, #108824.
-- **PR #108348** Thanks @hugenshen.
-- **PR #108880**
-- **PR #108637** Related #108447. Thanks @hosanxiv and @yuso-agent-it-hal.
-- **PR #108788**
-- **PR #108114** Thanks @0xghost42.
-- **PR #106638** Related #106637. Thanks @edenfunf.
-- **PR #108855**
-- **PR #107734** Related #107732. Thanks @edenfunf.
-- **PR #108804** Thanks @Alix-007.
-- **PR #108684** Thanks @Alix-007.
-- **PR #108894** Thanks @Alix-007.
-- **PR #108397** Thanks @yetval.
-- **PR #108797**
-- **PR #108734** Related #108277. Thanks @ZengWen-DT and @chenyanchen.
-- **PR #108350** Related #107341. Thanks @ianalloway and @danieljimz.
-- **PR #108873** Thanks @Alix-007.
-- **PR #108579** Related #108572. Thanks @zhanxingxin1998.
-- **PR #108545** Thanks @zhangguiping-xydt.
-- **PR #108913**
-- **PR #108779** Related #107591. Thanks @dagmarjeeves-lab.
-- **PR #108364** Thanks @qingminglong.
-- **PR #108910**
-- **PR #108914**
-- **PR #104989** Thanks @yetval.
-- **PR #108917**
-- **PR #108761** Thanks @ZengWen-DT.
-- **PR #108903**
-- **PR #107480** Thanks @zhangguiping-xydt.
-- **PR #108895** Thanks @Alix-007.
-- **PR #108670** Thanks @Alix-007.
-- **PR #108911** Thanks @Alix-007.
-- **PR #108887** Related #108362. Thanks @buhrclaw.
-- **PR #108577** Related #108570. Thanks @zhanxingxin1998.
-- **PR #108485** Thanks @VACInc.
-- **PR #108868**
-- **PR #108926** Related #108432. Thanks @jincheng-xydt and @bluedepth.
-- **PR #108929**
-- **PR #108932**
-- **PR #108355** Thanks @qingminglong.
-- **PR #108930**
-- **PR #107657** Related #107434. Thanks @ZengWen-DT and @FayAndXan.
-- **PR #108938**
-- **PR #108935** Related #104413. Thanks @ObliviateRickLin and @gustav-bliss.
-- **PR #108942**
-- **PR #108941**
-- **PR #108072** Thanks @sunlit-deng.
-- **PR #108321** Thanks @wahaha1223.
-- **PR #108757** Thanks @sunlit-deng.
-- **PR #108706** Thanks @krissding.
-- **PR #108927**
-- **PR #108950** Thanks @Pick-cat.
-- **PR #108947**
-- **PR #108726** Related #107917. Thanks @ZengWen-DT and @geekforlife.
-- **PR #108921**
-- **PR #108815** Thanks @mushuiyu886.
-- **PR #108771** Thanks @Alix-007.
-- **PR #108889**
-- **PR #108964**
-- **PR #108960**
-- **PR #108949**
-- **PR #108298** Thanks @xydt-juyaohui.
-- **PR #108218** Thanks @qingminglong.
-- **PR #108567** Thanks @VectorPeak.
-- **PR #104495** Related #103954. Thanks @destire-mio and @casper-bot-wodinga.
-- **PR #106453** Thanks @ZOOWH.
-- **PR #108558** Thanks @lsr911.
-- **PR #108622** Related #82281. Thanks @lonexreb and @bolovinclaw.
-- **PR #108368** Thanks @hugenshen.
-- **PR #106421** Thanks @ZOOWH.
-- **PR #108276** Thanks @chengzhichao-xydt.
-- **PR #108369** Thanks @SunnyShu0925.
-- **PR #108759** Related #108255. Thanks @LZY3538 and @gorkem2020.
-- **PR #108983**
-- **PR #108382** Thanks @xydigitLybnnnn.
-- **PR #108937** Thanks @Alix-007.
-- **PR #108777** Thanks @sunlit-deng.
-- **PR #108990**
-- **PR #108449** Thanks @Yehonal.
-- **PR #108966** Related #97180, #104779, #108517. Thanks @inemtsev and @belfortfilho.
-- **PR #108335** Thanks @mushuiyu886.
-- **PR #108339** Related #107708. Thanks @wangyan2026 and @NossieUK.
-- **PR #108737**
-- **PR #108396** Thanks @SunnyShu0925.
-- **PR #108281** Thanks @Canvinus.
-- **PR #108992** Thanks @Alix-007.
-- **PR #108783** Thanks @lsr911.
-- **PR #108790** Thanks @Sedrak-Hovhannisyan.
-- **PR #106399** Thanks @ly85206559.
-- **PR #108972** Thanks @Alix-007.
-- **PR #109013**
-- **PR #108834** Related #107916. Thanks @geekforlife.
-- **PR #107327** Related #107292. Thanks @SymbolStar and @delimir.
-- **PR #108800** Thanks @lsr911.
-- **PR #108991** Related #108632.
-- **PR #109022**
-- **PR #108751** Related #108152. Thanks @LavyaTandel and @CarelvanHeerden.
-- **PR #106400** Thanks @ly85206559.
-- **PR #108392** Related #103802. Thanks @ekinnee and @sazora.
-- **PR #108401** Thanks @yetval.
-- **PR #109051**
-- **PR #109028**
-- **PR #107323** Related #107255. Thanks @paulpitchford.
-- **PR #108689** Related #107856. Thanks @destire-mio and @Igallta.
-- **PR #108825**
-- **PR #108708** Related #108665.
-- **PR #108833**
-- **PR #108863**
-- **PR #108922** Thanks @wahaha1223.
-- **PR #108877**
-- **PR #108023** Related #108021. Thanks @ooiuuii.
-- **PR #108928** Thanks @ZengWen-DT.
-- **PR #108050** Related #108049. Thanks @ooiuuii.
-- **PR #103829** Related #103773. Thanks @lonexreb and @mlyon-web.
-- **PR #109083**
-- **PR #108948** Thanks @wahaha1223.
-- **PR #108806** Thanks @RileyJJY.
-- **PR #108973** Thanks @Alix-007.
-- **PR #109110**
-- **PR #108209** Thanks @ZengWen-DT.
-- **PR #109102**
-- **PR #109119** Related #109105.
-- **PR #108156** Thanks @qingminglong.
-- **PR #108826** Thanks @zenglingbiao.
-- **PR #108848** Thanks @wahaha1223.
-- **PR #108816** Thanks @sunlit-deng.
-- **PR #109141**
-- **PR #108813** Thanks @zhangguiping-xydt.
-- **PR #108840** Thanks @wings1029.
-- **PR #109117**
-- **PR #109075** Related #108664. Thanks @chac4l.
-- **PR #108866**
-- **PR #109142** Related #109099.
-- **PR #108900**
-- **PR #109090**
-- **PR #109107** Thanks @Alix-007.
-- **PR #108742**
-- **PR #109127** Thanks @Alix-007.
-- **PR #108828**
-- **PR #109162** Thanks @shakkernerd.
-- **PR #109118**
-- **PR #109154**
-- **PR #108832** Thanks @zenglingbiao.
-- **PR #108408** Thanks @wangmiao0668000666.
-- **PR #109166**
-- **PR #109115** Thanks @Alix-007.
-- **PR #108817**
-- **PR #109005**
-- **PR #108882**
-- **PR #106545** Thanks @mmaps and @pgondhi987.
-- **PR #109157**
-- **PR #109188**
-- **PR #108252** Thanks @wahaha1223.
-- **PR #109181**
-- **PR #108784** Thanks @RomneyDa.
-- **PR #109182**
-- **PR #109195**
-- **PR #109144**
-- **PR #109192**
-- **PR #108862** Thanks @wings1029.
-- **PR #108904** Related #107917. Thanks @geekforlife.
-- **PR #108618** Thanks @Monkey-wusky.
-- **PR #109201**
-- **PR #108709**
-- **PR #109184**
-- **PR #108823** Thanks @Leon-SK668.
-- **PR #106370** Thanks @Monkey-wusky.
-- **PR #109169**
-- **PR #108827** Related #108587. Thanks @NianJiuZst and @andrea-kingautomation.
-- **PR #109211**
-- **PR #109146** Thanks @Alix-007.
-- **PR #108977**
-- **PR #109229**
-- **PR #108835** Thanks @sibbl.
-- **PR #108710** Thanks @bladin.
-- **PR #109223**
-- **PR #109238**
-- **PR #109147**
-- **PR #109052** Thanks @Pick-cat and @cursoragent.
-- **PR #109222**
-- **PR #108776**
-- **PR #106840** Related #106839. Thanks @bill-starfoundry.
-- **PR #109151**
-- **PR #109056** Thanks @sallyom.
-- **PR #109242**
-- **PR #108856** Thanks @wings1029.
-- **PR #109244**
-- **PR #109226**
-- **PR #109252**
-- **PR #109183**
-- **PR #109255**
-- **PR #109248**
-- **PR #105086** Thanks @xydigit-zt.
-- **PR #109257** Thanks @RomneyDa.
-- **PR #109246** Thanks @RomneyDa.
-- **PR #108858** Thanks @wings1029.
-- **PR #108801** Related #104377. Thanks @DaigoSoup and @Inhum.
-- **PR #109236**
-- **PR #108897** Thanks @tzy-17.
-- **PR #109259**
-- **PR #109271**
-- **PR #109260**
-- **PR #109266**
-- **PR #109064** Thanks @Alix-007.
-- **PR #109273** Thanks @shakkernerd.
-- **PR #108898** Thanks @tzy-17.
-- **PR #109202** Thanks @NianJiuZst.
-- **PR #109272** Thanks @RomneyDa.
-- **PR #108353** Related #108349. Thanks @MohandesD.
-- **PR #108955** Thanks @RileyJJY and @lilikobe.
-- **PR #109289**
-- **PR #109164** Thanks @wangmiao0668000666.
-- **PR #109298**
-- **PR #109296**
-- **PR #94697** Related #76259. Thanks @xydigit-zt and @GulfStreamOutdoors.
-- **PR #109297** Thanks @RomneyDa.
-- **PR #109239** Thanks @Alix-007.
-- **PR #109194**
-- **PR #109281** Related #109280.
-- **PR #109232** Thanks @mushuiyu886.
-- **PR #109160**
-- **PR #109000** Thanks @wangmiao0668000666.
-- **PR #109284**
-- **PR #101746** Thanks @wings1029.
-- **PR #109279** Related #109277.
-- **PR #109314**
-- **PR #109322**
-- **PR #109108** Thanks @zhangguiping-xydt.
-- **PR #109150**
-- **PR #109267** Thanks @RomneyDa.
-- **PR #109318**
+- **PR #98143** Related #97521. Thanks @Pick-cat and @wangmiao0668000666.
+- **PR #98644** Thanks @ZengWen-DT and @Monkey-wusky.
+- **PR #101728** Thanks @wings1029 and @Monkey-wusky.
+- **PR #110613**
+- **PR #110576**
+- **PR #110036** Thanks @cxbAsDev.
+- **PR #110620**
+- **PR #101776** Thanks @cxbAsDev.
+- **PR #109906** Thanks @mushuiyu886.
+- **PR #110423** Thanks @cygnostik.
+- **PR #109452** Thanks @mushuiyu886.
+- **PR #110617** Related #110616.
+- **PR #109427**
+- **PR #110622**
+- **PR #109792**
+- **PR #110604**
+- **PR #110482**
+- **PR #110630**
+- **PR #110581**
+- **PR #110621**
+- **PR #110597**
+- **PR #110625**
+- **PR #110626**
+- **PR #110560**
+- **PR #110648**
+- **PR #104420** Thanks @cxbAsDev.
+- **PR #110628**
+- **PR #101442** Thanks @cxbAsDev.
+- **PR #101772** Thanks @cxbAsDev.
+- **PR #110623**
+- **PR #110605**
+- **PR #110664**
+- **PR #110654**
+- **PR #110632**
+- **PR #110584**
+- **PR #110687**
+- **PR #110651**
+- **PR #108333** Thanks @cxbAsDev.
+- **PR #110666**
+- **PR #110627** Thanks @Pick-cat.
+- **PR #101448** Thanks @cxbAsDev.
+- **PR #110347**
+- **PR #109265** Thanks @Alix-007.
+- **PR #110646**
+- **PR #110705** Related #110701. Thanks @shakkernerd.
+- **PR #110475**
+- **PR #110660**
+- **PR #110698**
+- **PR #110707**
+- **PR #110720**
+- **PR #110495** Thanks @VectorPeak.
+- **PR #101429** Thanks @cxbAsDev.
+- **PR #110732**
+- **PR #110708**
+- **PR #110483** Thanks @zhangguiping-xydt.
+- **PR #110615**
+- **PR #110631**
+- **PR #101447** Thanks @cxbAsDev.
+- **PR #110751**
+- **PR #110753**
+- **PR #110480** Thanks @zhangguiping-xydt.
+- **PR #109329** Thanks @IWhatsskill and @Solvely-Colin.
+- **PR #110787**
+- **PR #110611**
+- **PR #110682**
+- **PR #110788**
+- **PR #110799**
+- **PR #110800**
+- **PR #110801**
+- **PR #110653**
+- **PR #110806**
+- **PR #110740**
+- **PR #110644**
+- **PR #110807**
+- **PR #110810**
+- **PR #110392**
+- **PR #110809**
+- **PR #110635**
+- **PR #110618**
+- **PR #110798**
+- **PR #110808** Thanks @fuller-stack-dev.
+- **PR #110728**
+- **PR #110838**
+- **PR #110443** Thanks @ZengWen-DT.
+- **PR #110527**
+- **PR #110431** Related #110411.
+- **PR #110762** Thanks @mcaxtr.
+- **PR #110812**
+- **PR #110817**
+- **PR #110833**
+- **PR #110779**
+- **PR #110845**
+- **PR #110844**
+- **PR #110863**
+- **PR #110441** Thanks @ZengWen-DT.
+- **PR #110398** Thanks @RomneyDa.
+- **PR #110839**
+- **PR #110856**
+- **PR #110864**
+- **PR #110852**
+- **PR #110830**
+- **PR #110846**
+- **PR #107879** Related #107804. Thanks @Solvely-Colin.
+- **PR #110374** Thanks @jalehman.
+- **PR #110869**
+- **PR #110894**
+- **PR #110811** Related #108693. Thanks @JeffSteinbok.
+- **PR #110575** Related #110109. Thanks @c-h-.
+- **PR #110892**
+- **PR #110890**
+- **PR #110895**
+- **PR #110870**
+- **PR #110899**
+- **PR #110874**
+- **PR #110816**
+- **PR #110857**
+- **PR #110904**
+- **PR #110163** Thanks @IWhatsskill.
+- **PR #110891**
+- **PR #110909**
+- **PR #110889**
+- **PR #110910**
+- **PR #110821**
+- **PR #110914**
+- **PR #110912** Related #110911.
+- **PR #110905**
+- **PR #110919**
+- **PR #110897** Thanks @RomneyDa.
+- **PR #110913**
+- **PR #110916**
+- **PR #110139** Thanks @IWhatsskill.
+- **PR #110922** Related #110572.
+- **PR #110893** Related #110394. Thanks @omarshahine.
+- **PR #102255** Related #102238. Thanks @zw-xysk and @yetval.
+- **PR #110931** Related #110930.
+- **PR #110934**
+- **PR #110936**
+- **PR #110146** Thanks @IWhatsskill.
+- **PR #110832**
+- **PR #110938**
+- **PR #110359**
+- **PR #105830** Related #105413. Thanks @SymbolStar and @4symmetry19.
+- **PR #110442** Thanks @ZengWen-DT.
+- **PR #110951**
+- **PR #110924** Thanks @mushuiyu886.
+- **PR #110949**
+- **PR #110945**
+- **PR #110674** Thanks @ZengWen-DT.
+- **PR #110944** Related #108692. Thanks @JeffSteinbok.
+- **PR #110888**
+- **PR #110681**
+- **PR #110933**
+- **PR #110675** Thanks @ZengWen-DT.
+- **PR #110759** Thanks @tzy-17.
+- **PR #110943**
+- **PR #105784** Thanks @mushuiyu886.
+- **PR #109026** Thanks @hugenshen and @web-flow.
+- **PR #109945** Thanks @xydt-juyaohui.
+- **PR #110677** Thanks @ZengWen-DT.
+- **PR #110957**
+- **PR #110410** Thanks @sheyanmin.
+- **PR #109044** Thanks @hugenshen.
+- **PR #110925**
+- **PR #110958**
+- **PR #110966**
+- **PR #109047** Thanks @hugenshen.
+- **PR #109691** Thanks @ZengWen-DT.
+- **PR #110967**
+- **PR #110676** Thanks @ZengWen-DT.
+- **PR #110970**
+- **PR #110908** Related #110859.
+- **PR #105274** Thanks @mushuiyu886.
+- **PR #110959**
+- **PR #110591** Thanks @cxbAsDev.
+- **PR #110017** Thanks @xydt-juyaohui.
+- **PR #110977** Related #110965.
+- **PR #110427** Thanks @zenglingbiao.
+- **PR #110961** Related #110955.
+- **PR #110791** Thanks @fuller-stack-dev.
+- **PR #109823** Thanks @Yigtwxx.
+- **PR #110927**
+- **PR #110981**
+- **PR #110980**
+- **PR #110594** Thanks @cxbAsDev.
+- **PR #109904** Related #100954. Thanks @Yigtwxx and @aniruddhaadak80.
+- **PR #110148** Thanks @Yigtwxx.
+- **PR #110655** Thanks @Yigtwxx.
+- **PR #110973**
+- **PR #110983**
+- **PR #109161** Thanks @xydt-juyaohui.
+- **PR #110918** Thanks @Yigtwxx.
+- **PR #110985**
+- **PR #110401** Thanks @Leon-SK668.
+- **PR #110969** Related #79553. Thanks @akang1798.
+- **PR #110952**
+- **PR #110971**
+- **PR #110516** Thanks @cxbAsDev.
+- **PR #110991**
+- **PR #110747** Thanks @tzy-17.
+- **PR #110968** Thanks @RomneyDa.
+- **PR #110984**
+- **PR #110906**
+- **PR #110999**
+- **PR #110978**
+- **PR #110661** Thanks @IWhatsskill.
+- **PR #111009**
+- **PR #98941** Thanks @miorbnli.
+- **PR #98098** Thanks @lwy-2.
+- **PR #101079** Thanks @cxbAsDev.
+- **PR #110750** Thanks @tzy-17.
+- **PR #111011**
+- **PR #108249** Thanks @amknight.
+- **PR #108849** Thanks @zenglingbiao.
+- **PR #111002**
+- **PR #110760** Thanks @mushuiyu886.
+- **PR #111021**
+- **PR #111024** Thanks @fuller-stack-dev.
+- **PR #111015**
+- **PR #111012** Related #110996.
+- **PR #111022**
+- **PR #111027**
+- **PR #111001**
+- **PR #110756** Thanks @tzy-17.
+- **PR #107895** Thanks @mushuiyu886.
+- **PR #111034** Related #97523. Thanks @yetval.
+- **PR #110992**
+- **PR #111007**
+- **PR #110412** Related #109488. Thanks @alexzhu0 and @mcaxtr and @evelea.
+- **PR #111017**
+- **PR #111003**
+- **PR #111029** Related #109911. Thanks @edenfunf.
+- **PR #110052** Thanks @omarshahine.
+- **PR #110515** Related #110451. Thanks @fuller-stack-dev.
+- **PR #99115** Thanks @cxbAsDev.
+- **PR #110693** Thanks @lsr911.
+- **PR #110993**
+- **PR #111040**
+- **PR #104904** Related #104783. Thanks @MonkeyLeeT and @Solvely-Colin and @a0903018269.
+- **PR #111047**
+- **PR #111049** Related #103729. Thanks @yetval.
+- **PR #108200** Thanks @zenglingbiao.
+- **PR #109053** Thanks @hugenshen.
+- **PR #109487** Thanks @zenglingbiao.
+- **PR #109462** Thanks @zenglingbiao.
+- **PR #111000**
+- **PR #111042**
+- **PR #110731** Thanks @zhangguiping-xydt.
+- **PR #101830** Related #76233. Thanks @yetval and @100yenadmin.
+- **PR #111048**
+- **PR #110684** Thanks @mushuiyu886.
+- **PR #98074** Thanks @mpz4life.
+- **PR #110994**
+- **PR #110300** Thanks @shaoohh.
+- **PR #111043**
+- **PR #111036**
+- **PR #111069**
+- **PR #110903** Thanks @mushuiyu886.
+- **PR #111072** Related #103849. Thanks @yetval.
+- **PR #111030**
+- **PR #111055**
+- **PR #110745** Related #103055. Thanks @yetval.
+- **PR #111035**
+- **PR #111075**
+- **PR #104140** Thanks @qingminglong.
+- **PR #111066**
+- **PR #110886**
+- **PR #111013**
+- **PR #110956** Thanks @christiandesantis.
+- **PR #111095**
+- **PR #103812** Thanks @yetval.
+- **PR #111089**
+- **PR #111096** Related #111059.
+- **PR #110948**
+- **PR #111097**
+- **PR #110878** Thanks @mushuiyu886.
+- **PR #104211** Related #102017. Thanks @MonkeyLeeT and @commonweavelabs-crypto.
+- **PR #110939**
+- **PR #111103**
+- **PR #110921** Related #110920. Thanks @edenfunf.
+- **PR #111094** Thanks @mcaxtr.
+- **PR #111091**
+- **PR #110536** Thanks @wahaha1223.
+- **PR #111109**
+- **PR #111116** Thanks @fuller-stack-dev.
+- **PR #111119**
+- **PR #106018** Related #105940. Thanks @tiffanychum and @yetval.
+- **PR #111105** Thanks @ZengWen-DT.
+- **PR #110954** Thanks @zhangguiping-xydt.
+- **PR #111081** Thanks @sunlit-deng.
+- **PR #110060** Related #102392. Thanks @yetval.
+- **PR #108378** Thanks @yetval.
+- **PR #111112**
+- **PR #111124** Thanks @fuller-stack-dev.
+- **PR #103793** Thanks @yetval.
+- **PR #111106** Thanks @ZengWen-DT.
+- **PR #111134** Related #111130.
+- **PR #109011** Related #65656, #109006. Thanks @edenfunf and @myericho.
+- **PR #111056** Thanks @ZengWen-DT.
+- **PR #111063** Related #111062. Thanks @aspalagin.
+- **PR #111136**
+- **PR #111032**
+- **PR #110755** Thanks @SunnyShu0925.
+- **PR #111046**
+- **PR #111150**
+- **PR #110678** Thanks @YangManBOBO.
+- **PR #110960**
+- **PR #105911** Related #105679. Thanks @momothemage and @aniruddhaadak80.
+- **PR #111038**
+- **PR #110053** Related #109979. Thanks @LiLan0125 and @mcaxtr and @danharvey.
+- **PR #111099** Thanks @Alix-007.
+- **PR #111156**
+- **PR #108789** Related #108337. Thanks @Bartok9 and @pr10mail5.
+- **PR #111137**
+- **PR #111179**
+- **PR #111147**
+- **PR #111178**
+- **PR #111145** Thanks @fuller-stack-dev.
+- **PR #111188**
+- **PR #111189**
+- **PR #111186**
+- **PR #111204**
+- **PR #111207**
+- **PR #110754** Thanks @mcaxtr.
+- **PR #111140**
+- **PR #110987**
+- **PR #111212** Thanks @fuller-stack-dev.
+- **PR #110797** Thanks @FMLS.
+- **PR #111228**
+- **PR #111052**
+- **PR #111234**
+- **PR #111230**
+- **PR #111078** Thanks @LZY3538.
+- **PR #111167** Thanks @fuller-stack-dev.
+- **PR #111238** Thanks @fuller-stack-dev.
+- **PR #111168** Thanks @fuller-stack-dev.
+- **PR #111093** Thanks @Alix-007.
+- **PR #111169** Thanks @fuller-stack-dev.
+- **PR #105929** Related #105926.
+- **PR #111060**
+- **PR #111077** Thanks @LZY3538.
+- **PR #111245**
+- **PR #111076** Thanks @LZY3538.
+- **PR #110932**
+- **PR #111214**
+- **PR #103706** Related #103668. Thanks @jincheng-xydt.
+- **PR #111061** Thanks @Alix-007.
+- **PR #111114**
+- **PR #111149**
+- **PR #110995**
+- **PR #111259**
+- **PR #111265**
+- **PR #111263**
+- **PR #111268**
+- **PR #111249**
+- **PR #111267** Related #110325.
+- **PR #110941**
+- **PR #111211** Thanks @fuller-stack-dev.
+- **PR #111280**
+- **PR #110976**
+- **PR #111142**
+- **PR #111224**
+- **PR #111014**
+- **PR #111216** Thanks @clifton.
+- **PR #111158**
+- **PR #111221**
+- **PR #110862** Thanks @zhangguiping-xydt.
+- **PR #107614** Thanks @zhangguiping-xydt.
+- **PR #110989**
+- **PR #111297** Related #110325.
+- **PR #111039**
+- **PR #111292** Related #111271, #111272, #111273, #111274.
+- **PR #111044**
+- **PR #111104**
+- **PR #108323** Related #108238. Thanks @hxy91819 and @vivi-lucky2020.
+- **PR #111311**
+- **PR #111244**
+- **PR #107991** Thanks @hxy91819.
+- **PR #111315**
+- **PR #111215** Thanks @zhangguiping-xydt.
+- **PR #111322**
+- **PR #110667** Thanks @zhangguiping-xydt.
+- **PR #110384** Thanks @zhangguiping-xydt.
+- **PR #111309**
+- **PR #111287**
+- **PR #111293**
+- **PR #111318**
+- **PR #111331** Related #111310.
+- **PR #111300** Related #111270.
+- **PR #111286**
+- **PR #111289**
+- **PR #111326**
+- **PR #110231** Related #110237. Thanks @amknight.
+- **PR #111348**
+- **PR #111345**
+- **PR #111225**
+- **PR #111324** Related #110201.
+- **PR #110831**
+- **PR #111194**
+- **PR #111341**
+- **PR #111298**
+- **PR #111041**
+- **PR #111371**
+- **PR #111033** Thanks @IWhatsskill.
+- **PR #111173**
+- **PR #111384**
+- **PR #111335**
+- **PR #111385**
+- **PR #111388**
+- **PR #111379**
+- **PR #111393**
+- **PR #111395**
+- **PR #111369**
+- **PR #111410** Related #111402.
+- **PR #111417**
+- **PR #111350**
+- **PR #111413**
+- **PR #111394**
+- **PR #111423**
+- **PR #111414**
+- **PR #111427**
+- **PR #104054** Thanks @zhangguiping-xydt.
+- **PR #111424**
+- **PR #111429** Related #111415.
+- **PR #108974** Thanks @zhangguiping-xydt.
+- **PR #111431**
+- **PR #111409**
+- **PR #111418**
+- **PR #111382**
+- **PR #111426**
+- **PR #111073** Thanks @RomneyDa.
+- **PR #111449**
+- **PR #111444**
+- **PR #111389**
+- **PR #111433**
+- **PR #111223** Related #104548. Thanks @metaforismo and @leonme.
+- **PR #111440**
+- **PR #111416**
+- **PR #111477**
+- **PR #111456**
+- **PR #111421**
+- **PR #111467**
+- **PR #111473**
+- **PR #111333** Thanks @VectorPeak.
+- **PR #111353** Thanks @Yigtwxx.
+- **PR #111428** Thanks @mushuiyu886.
+- **PR #111390** Related #111387. Thanks @litang9.
+- **PR #111380** Thanks @zhangguiping-xydt.
+- **PR #111327** Thanks @zenglingbiao.
+- **PR #111483**
+- **PR #111337**
+- **PR #111446** Related #111432.
+- **PR #111276** Thanks @YangManBOBO.
+- **PR #111323** Thanks @zenglingbiao.
+- **PR #111374** Thanks @mushuiyu886.
+- **PR #108509** Related #108498. Thanks @vyctorbrzezowski.
+- **PR #111490**
+- **PR #111378** Related #72948. Thanks @masatohoshino and @mayank6136.
+- **PR #111190**
+- **PR #111447**
+- **PR #111493** Thanks @shakkernerd.
+- **PR #111459** Thanks @IWhatsskill and @Solvely-Colin.
+- **PR #111494**
+- **PR #111451**
+- **PR #111475** Related #111450.
+- **PR #111430**
+- **PR #111495**
+- **PR #111501**
+- **PR #111505** Related #111401.
+- **PR #111502**
+- **PR #111507** Related #111484.
+- **PR #111509**
+- **PR #111504**
+- **PR #111514** Related #111513.
+- **PR #111511**
+- **PR #111515**
+- **PR #111218**
+- **PR #111521**
+- **PR #111141** Related #107228. Thanks @Marvinthebored and @Peetiegonzalez.
+- **PR #111474** Thanks @sallyom.
+- **PR #111517**
+- **PR #111529**
+- **PR #111411**
+- **PR #111518**
+- **PR #111531**
+- **PR #111465**
+- **PR #111533**
+- **PR #111503**
+- **PR #111339**
+- **PR #107017** Thanks @mcaxtr.
+- **PR #111537**
+- **PR #111535**
+- **PR #111540**
+- **PR #111555**
+- **PR #111556**
+- **PR #111560**
+- **PR #111553**
+- **PR #111554**
+- **PR #111557** Related #111232.
+- **PR #111448** Thanks @xydigit-zt.
+- **PR #111562**
+- **PR #111565**
+- **PR #111235** Thanks @ZengWen-DT.
+- **PR #111201** Thanks @ZengWen-DT.
+- **PR #111197** Thanks @ZengWen-DT.
+- **PR #111460** Thanks @mushuiyu886.
+- **PR #111441** Thanks @mushuiyu886.
+- **PR #111364** Thanks @Yigtwxx.
+- **PR #111445**
+- **PR #111558**
+- **PR #111524**
+- **PR #111530**
+- **PR #111253** Thanks @mushuiyu886.
+- **PR #111618**
+- **PR #111340** Thanks @zenglingbiao.
+- **PR #111607**
+- **PR #111282** Thanks @zenglingbiao.
+- **PR #111605**
+- **PR #109767** Thanks @ZengWen-DT and @cursoragent and @sallyom.
+- **PR #111569**
+- **PR #111260** Thanks @LZY3538.
+- **PR #110721** Thanks @hugenshen and @sallyom.
+- **PR #111613**
+- **PR #111481**
+- **PR #111210** Thanks @Alix-007.
+- **PR #111231** Thanks @hugenshen.
+- **PR #111288** Thanks @zenglingbiao.
+- **PR #111375** Thanks @FMLS.
+- **PR #111583**
+- **PR #111610**
+- **PR #111645**
+- **PR #111314** Thanks @hugenshen.
+- **PR #108007** Thanks @jesse-merhi.
+- **PR #111184** Thanks @YangManBOBO.
+- **PR #111659**
+- **PR #111642**
+- **PR #111598**
+- **PR #111177** Thanks @YangManBOBO.
+- **PR #111668**
+- **PR #111677**
+- **PR #111665**
+- **PR #111656**
+- **PR #111261** Thanks @LZY3538.
+- **PR #111680**
+- **PR #111608**
+- **PR #111685**
+- **PR #111681**
+- **PR #111532**
+- **PR #111664**
+- **PR #111694**
+- **PR #111679** Thanks @fuller-stack-dev.
+- **PR #111691** Thanks @fuller-stack-dev.
+- **PR #111689**
+- **PR #111701** Related #111627.
+- **PR #111678**
+- **PR #111686**
+- **PR #111640**
+- **PR #111670**
+- **PR #111693**
+- **PR #111707**
+- **PR #111644**
+- **PR #111703**
+- **PR #111714**
+- **PR #111615**
+- **PR #111724**
+- **PR #111698**
+- **PR #111652** Thanks @pgondhi987.
+- **PR #111653** Thanks @pgondhi987.
+- **PR #111748** Thanks @fuller-stack-dev.
+- **PR #111749**
+- **PR #111674** Thanks @ZengWen-DT.
+- **PR #111619**
+- **PR #111758**
+- **PR #111113** Thanks @zenglingbiao.
+- **PR #111648**
+- **PR #111726**
+- **PR #111757**
+- **PR #111710** Related #111597.
+- **PR #111111** Thanks @VectorPeak.
+- **PR #111772**
+- **PR #111761**
+- **PR #111088** Thanks @Leon-SK668.
+- **PR #111571**
+- **PR #111651** Thanks @pgondhi987.
+- **PR #110881** Thanks @mushuiyu886.
+- **PR #111800**
+- **PR #111655** Related #111684. Thanks @Solvely-Colin.
+- **PR #110824** Thanks @Alix-007.
+- **PR #110725** Thanks @zhangguiping-xydt and @hxy91819.
+- **PR #110741** Thanks @Leon-SK668 and @altaywtf.
+- **PR #111824** Related #111820. Thanks @dineshsuthar123.
+- **PR #111687**
+- **PR #111744** Related #111742. Thanks @ooiuuii and @altaywtf.
+- **PR #111855**
+- **PR #111871**
+- **PR #111834**
+- **PR #111876**
+- **PR #111486** Thanks @zhangguiping-xydt.
+- **PR #111867**
+- **PR #111891**
+- **PR #111869** Related #111862. Thanks @jalehman.
+- **PR #111516** Thanks @IWhatsskill and @Solvely-Colin.
+- **PR #111883**
+- **PR #111911**
+- **PR #111783**
+- **PR #111916**
+- **PR #111907**
+- **PR #111918**
+- **PR #111909**
+- **PR #111927** Related #111919. Thanks @shakkernerd.
+- **PR #111928**
+- **PR #111914**
+- **PR #111929**
+- **PR #111933**
+- **PR #111682** Thanks @fuller-stack-dev.
+- **PR #111672** Thanks @fuller-stack-dev.
+- **PR #111932** Related #111931.
+- **PR #111953** Thanks @fuller-stack-dev.
+- **PR #111831** Related #111643. Thanks @Solvely-Colin.
+- **PR #111963** Thanks @Patrick-Erichsen.
+- **PR #111949** Thanks @jalehman.
+- **PR #111803** Thanks @mushuiyu886.
+- **PR #110297** Related #107655. Thanks @joshavant and @AyitLabs.
+- **PR #111967** Thanks @Patrick-Erichsen.
+- **PR #111787**
+- **PR #111796**
+- **PR #111975**
+- **PR #111974**
+- **PR #111920**
+- **PR #110256** Thanks @paulcam206.
+- **PR #111935** Thanks @Patrick-Erichsen.
+- **PR #111984** Thanks @RomneyDa.
+- **PR #111087** Related #111050. Thanks @omarshahine.
+- **PR #110345** Related #109025. Thanks @joshavant and @andersonjeccel.
+- **PR #111986** Related #111973.
+- **PR #111720**
+- **PR #111997**
+- **PR #109960** Thanks @RileyJJY.
+- **PR #111988**
+- **PR #111996**
+- **PR #109561** Thanks @lzyyzznl.
+- **PR #109499** Thanks @SunnyShu0925.
+- **PR #110008** Thanks @Monkey-wusky.
+- **PR #111980** Thanks @RomneyDa.
+- **PR #110784** Thanks @Alix-007.
+- **PR #110002** Thanks @wahaha1223.
+- **PR #111987** Thanks @fuller-stack-dev.
+- **PR #109498** Thanks @zw-xysk.
+- **PR #109451** Thanks @wahaha1223.
+- **PR #109950** Thanks @sunlit-deng.
+- **PR #109699** Related #109550. Thanks @chengzhichao-xydt and @TrueHOOHA.
+- **PR #112009** Thanks @fuller-stack-dev.
+- **PR #112010**
+- **PR #108012** Thanks @sunlit-deng.
+- **PR #110546** Thanks @Pick-cat.
+- **PR #111269** Thanks @hugenshen.
+- **PR #112008** Thanks @RomneyDa.
+- **PR #111329**
+- **PR #111989**
+- **PR #112011**
+- **PR #108987** Thanks @sunlit-deng.
+- **PR #107978** Thanks @yetval.
+- **PR #111699**
+- **PR #109495** Thanks @RileyJJY.
+- **PR #112015** Thanks @RomneyDa.
+- **PR #112016**
+- **PR #110001** Thanks @YangManBOBO.
+- **PR #109923** Thanks @wangmiao0668000666.
+- **PR #104093** Thanks @mikasa0818.
+- **PR #110772** Thanks @cxbAsDev and @penggaolai.
+- **PR #112026**
+- **PR #109697** Thanks @LZY3538.
+- **PR #109446** Related #109421. Thanks @dr00-eth.
+- **PR #111866**
+- **PR #106635** Thanks @ZOOWH.
+- **PR #111977**
+- **PR #111120** Thanks @xydt-juyaohui.
+- **PR #109532** Thanks @Leon-SK668.
+- **PR #111983**
+- **PR #109116** Thanks @Alix-007.
+- **PR #111995**
+- **PR #104564** Thanks @qingminlong.
+- **PR #112021** Thanks @fuller-stack-dev.
+- **PR #111152** Thanks @zenglingbiao.
+- **PR #112044**
+- **PR #106314** Thanks @wahaha1223 and @cursoragent.
+- **PR #105487** Related #105423. Thanks @zw-xysk and @aniruddhaadak80.
+- **PR #111769** Thanks @chenyangjun-xy.
+- **PR #112059**
+- **PR #110704** Related #103905. Thanks @xydigit-zt and @chrisbaker2000.
+- **PR #112043**
+- **PR #104930** Thanks @chengzhichao-xydt.
+- **PR #111183** Thanks @wahaha1223.
+- **PR #112019**
+- **PR #104810** Thanks @chengzhichao-xydt.
+- **PR #112028** Related #112023.
+- **PR #103377** Thanks @miorbnli.
+- **PR #104850** Thanks @chengzhichao-xydt.
+- **PR #109042** Thanks @Alix-007.
+- **PR #102329** Related #102324. Thanks @ZOOWH and @yetval.
+- **PR #109989** Thanks @zw-xysk.
+- **PR #105085** Thanks @qingminlong.
+- **PR #105307** Related #105199. Thanks @ObliviateRickLin and @aniruddhaadak80.
+- **PR #104727** Thanks @Super-Cabbage.
+- **PR #96482** Thanks @winger007.
+- **PR #109909** Thanks @chengzhichao-xydt.
+- **PR #112046**
+- **PR #109729** Thanks @ZengWen-DT and @cursoragent.
+- **PR #110537** Thanks @wahaha1223.
+- **PR #112035**
+- **PR #103658** Thanks @mikasa0818.
+- **PR #109401** Thanks @ZengWen-DT.
+- **PR #104335** Thanks @owen-ever.
+- **PR #107121** Thanks @lzyyzznl.
+- **PR #112081** Thanks @wahaha1223.
+- **PR #111968** Thanks @fuller-stack-dev.
+- **PR #112063**
+- **PR #106502** Thanks @sunlit-deng.
+- **PR #101816** Thanks @masatohoshino.
+- **PR #90169** Thanks @goldmar.
+- **PR #95493** Related #95441. Thanks @openperf and @fanyangCS.
+- **PR #111435** Thanks @Yigtwxx.
+- **PR #109788** Related #109275. Thanks @TianT1209 and @ccaum.
+- **PR #112071**
+- **PR #89721** Thanks @xiaobao-k8s.
+- **PR #112070** Related #112068. Thanks @fuller-stack-dev.
+- **PR #112083**
+- **PR #112062**
+- **PR #105547** Thanks @qingminlong.
+- **PR #112066**
+- **PR #98320** Related #98311. Thanks @TUARAN and @yetval.
+- **PR #112036** Thanks @Patrick-Erichsen.
+- **PR #103622** Thanks @chengzhichao-xydt.
+- **PR #104707** Thanks @NarahariRaghava.
+- **PR #112076**
+- **PR #112108**
+- **PR #101511** Thanks @mikasa0818.
+- **PR #108943** Thanks @QiuYuang.
+- **PR #109431** Thanks @masatohoshino.
+- **PR #111669**
+- **PR #112074**
+- **PR #95514** Related #95291. Thanks @mikasa0818 and @phoenixyy.
+- **PR #112170** Thanks @vincentkoc.
+- **PR #112171** Thanks @RomneyDa.
+- **PR #112107**
+- **PR #112031**
+- **PR #104250** Thanks @mikasa0818.
+- **PR #112162**
+- **PR #104347** Related #104320. Thanks @ObliviateRickLin and @dale-goes-fast.
+- **PR #82798** Related #82621. Thanks @joshavant and @aounakram.
+- **PR #111841** Related #111520. Thanks @xialonglee and @Patrick-Erichsen.
+- **PR #112172** Thanks @vincentkoc.
+- **PR #109509** Thanks @Leon-SK668.
+- **PR #112190** Thanks @vincentkoc.
+- **PR #112073**
+- **PR #112191**
+- **PR #109986** Thanks @LZY3538.
+- **PR #95713** Related #95696. Thanks @0xghost42 and @davidxu00.
+- **PR #112065** Thanks @RomneyDa.
+- **PR #94019** Thanks @evan-YM.
+- **PR #112047** Thanks @RomneyDa.
+- **PR #103171** Related #98437. Thanks @HOYALIM and @alvelda.
+- **PR #108014** Thanks @miorbnli.
+- **PR #99772** Related #99620. Thanks @SunnyShu0925 and @mattpodolak.
+- **PR #112161**
+- **PR #112165** Thanks @vincentkoc.
+- **PR #112168** Thanks @vincentkoc.
+- **PR #112197**
+- **PR #103209** Thanks @wangmiao0668000666.
+- **PR #107261** Thanks @cyberic68.
+- **PR #90998** Thanks @clawSean.
+- **PR #112039**
+- **PR #112201** Thanks @RomneyDa.
+- **PR #112208**
+- **PR #112025** Thanks @RomneyDa.
+- **PR #104278** Thanks @mikasa0818.
+- **PR #112186**
+- **PR #112163**
+- **PR #112181** Thanks @vincentkoc.
+- **PR #112185** Thanks @vincentkoc.
+- **PR #112199** Thanks @RomneyDa.
+- **PR #86711** Related #72013. Thanks @SebTardif and @scipher888.
+- **PR #112038**
+- **PR #112224** Thanks @vincentkoc.
+- **PR #92196** Related #44540. Thanks @yetval and @markclawbot.
+- **PR #112209**
+- **PR #112203** Thanks @RomneyDa.
+- **PR #112210** Related #112205, #112206, #112207.
+- **PR #88203** Related #88111. Thanks @TurboTheTurtle and @Cuttingwater.
+- **PR #112184**
+- **PR #112037** Related #111971.
+- **PR #97059** Thanks @harjothkhara.
+- **PR #112228** Related #112218. Thanks @vincentkoc.
+- **PR #112233**
+- **PR #89096** Thanks @shawnduggan.
+- **PR #112239**
+- **PR #112060**
+- **PR #112082**
+- **PR #112237**
+- **PR #112012**
+- **PR #112006**
+- **PR #112254** Thanks @vincentkoc.
+- **PR #111835** Thanks @masatohoshino.
+- **PR #112216**
+- **PR #109313** Related #109218. Thanks @SebTardif and @altaywtf and @devodriqroberts.
+- **PR #112258**
+- **PR #112188**
+- **PR #112221**
+- **PR #112180**
+- **PR #109647** Thanks @zhangguiping-xydt.
+- **PR #112279** Thanks @vincentkoc.
+- **PR #112276**
+- **PR #112261**
+- **PR #112290**
+- **PR #112291**
+- **PR #112287** Thanks @vincentkoc.
+- **PR #112296**
+- **PR #112267**
+- **PR #98631** Related #98591. Thanks @liuhao1024 and @haruaiclone-droid.
+- **PR #112262**
+- **PR #112301** Thanks @RomneyDa.
+- **PR #112235** Related #112234. Thanks @RomneyDa.
+- **PR #112249** Thanks @RomneyDa.
+- **PR #111872** Thanks @Pick-cat and @cursoragent and @altaywtf.
+- **PR #112293**
+- **PR #105162** Related #105164. Thanks @Papilionidae.
+- **PR #111998**
+- **PR #112211** Thanks @RomneyDa.
+- **PR #107137** Related #106765. Thanks @yangxiansheng and @donald-g-beckett.
+- **PR #112195**
+- **PR #101906** Thanks @masatohoshino.
+- **PR #105040** Related #105036. Thanks @moguangyu5-design.
+- **PR #105807** Related #105803. Thanks @moguangyu5-design.
+- **PR #99643** Related #99601. Thanks @mushuiyu886 and @34262315716.
+- **PR #109177** Thanks @ZOOWH.
+- **PR #109815** Thanks @ZengWen-DT and @cursoragent.
+- **PR #112175**
+- **PR #103808** Thanks @fengjikui.
+- **PR #103751** Related #100988. Thanks @849261680 and @1231CheGites.
+- **PR #101037** Thanks @mushuiyu886.
+- **PR #105039** Thanks @ObliviateRickLin.
+- **PR #112299** Related #111643. Thanks @Solvely-Colin.
+- **PR #111281** Thanks @mushuiyu886.
+- **PR #91553** Related #42798. Thanks @TUARAN and @archerhpagent.
+- **PR #109139** Thanks @Alix-007.
+- **PR #104637** Related #104538. Thanks @ObliviateRickLin and @Omarks906.
+- **PR #105567** Thanks @lzyyzznl.
+- **PR #111209** Thanks @mushuiyu886.
+- **PR #104234** Thanks @mikasa0818.
+- **PR #109875** Related #109293. Thanks @lee-xydt and @pacoa-kdbg.
+- **PR #111266** Thanks @mushuiyu886.
+- **PR #107626** Thanks @Pick-cat.
+- **PR #111164** Thanks @chenyangjun-xy.
+- **PR #65359** Related #65305. Thanks @maxreith.
+- **PR #108140** Thanks @qingminglong.
+- **PR #103970** Thanks @harjothkhara.
+- **PR #111307** Thanks @Yigtwxx.
+- **PR #111239** Thanks @mushuiyu886.
+- **PR #110593** Thanks @cxbAsDev.
+- **PR #112056**
+- **PR #87986** Related #87985. Thanks @shbernal.
+- **PR #102537** Related #102323. Thanks @TUARAN and @yetval.
+- **PR #78139** Thanks @kate.
+- **PR #98053** Related #86387. Thanks @lzyyzznl and @7inRivulet.
+- **PR #99542** Thanks @masatohoshino.
+- **PR #104265** Thanks @goldmar.
+- **PR #112406** Thanks @vincentkoc.
+- **PR #112381** Related #112377. Thanks @fuller-stack-dev.
+- **PR #112337**
+- **PR #112418** Thanks @pash-openai.
+- **PR #112354** Thanks @fuller-stack-dev.
+- **PR #112379**
+- **PR #112284**
+- **PR #101328** Thanks @giodl73-repo.
+- **PR #104111** Thanks @aaroneden and @obviyus.
+- **PR #112387**
+- **PR #112302**
+- **PR #112334** Thanks @VACInc.
+- **PR #112321** Related #112217, #112219, #112220.
+- **PR #107935** Related #105423. Thanks @LZY3538 and @aniruddhaadak80.
+- **PR #112426** Thanks @vincentkoc.
+- **PR #112413** Thanks @jalehman.
+- **PR #112444** Thanks @vincentkoc.
+- **PR #112443** Thanks @jalehman.
+- **PR #112260**
+- **PR #112400** Related #112040.
+- **PR #109057** Related #108945. Thanks @aspalagin and @junwei1213.
+- **PR #101755** Thanks @giodl73-repo and @Patrick-Erichsen.
+- **PR #101973** Thanks @giodl73-repo and @Patrick-Erichsen.
+- **PR #112415**
+- **PR #112434**
+- **PR #112412** Related #112405. Thanks @fuller-stack-dev.
+- **PR #112467** Thanks @fuller-stack-dev.
+- **PR #112457** Related #112454. Thanks @fuller-stack-dev.
+- **PR #112471**
+- **PR #102228** Thanks @giodl73-repo and @Patrick-Erichsen.
+- **PR #112441**
+- **PR #112433** Related #112242.
+- **PR #103895** Related #103673. Thanks @Patrick-Erichsen.
+- **PR #112357**
+- **PR #102296** Thanks @giodl73-repo and @Patrick-Erichsen.
+- **PR #112308**
+- **PR #112335**
+- **PR #112338** Related #112336.
+- **PR #112482** Thanks @Patrick-Erichsen.
+- **PR #112393** Related #91171. Thanks @mikasa0818 and @wolfeee.
+- **PR #100146** Thanks @SunnyShu0925.
+- **PR #111527**
+- **PR #112484**
+- **PR #112491**
+- **PR #112448**
+- **PR #111122** Thanks @yetval and @jalehman.
+- **PR #112236** Thanks @RomneyDa.
+- **PR #112502**
+- **PR #112493**
+- **PR #112503**
+- **PR #112488**
+- **PR #112339** Related #112315.
+- **PR #112506** Thanks @RomneyDa.
+- **PR #105356** Thanks @solavrc.
+- **PR #111636** Thanks @Alix-007.
+- **PR #105884** Thanks @Alix-007.
+- **PR #112497** Thanks @fuller-stack-dev.
+- **PR #112507** Related #98674. Thanks @athuljayaram.
+- **PR #112510**
+- **PR #112378** Thanks @jalehman.
+- **PR #112414** Thanks @jalehman.
+- **PR #92261** Thanks @skocher.
+- **PR #112319**
+- **PR #112511**
+- **PR #103866** Related #103864. Thanks @niks999.
+- **PR #112458** Related #95612, #107668. Thanks @fuller-stack-dev and @cstreeter and @josh-cornelius.
+- **PR #112526**
+- **PR #112529** Thanks @RomneyDa.
+- **PR #90579** Related #90557. Thanks @wangwllu.
+- **PR #112531** Thanks @Patrick-Erichsen.
+- **PR #112430** Thanks @IWhatsskill.
+- **PR #112465** Thanks @RomneyDa.
+- **PR #112532**
+- **PR #112536**
+- **PR #112333**
+- **PR #112527**
+- **PR #112543**
+- **PR #112541**
+- **PR #112538**
+- **PR #112545**
+- **PR #112546**
+- **PR #112489**
+- **PR #112548** Related #112520.
+- **PR #112535**
+- **PR #112523**
+- **PR #112550** Related #112549.
+- **PR #112552**
+- **PR #112553**
+- **PR #112534** Thanks @moeedahmed.
+- **PR #112566**
+- **PR #112557**
+- **PR #112539**
+- **PR #110216** Thanks @VACInc and @Serhii-Leniv.
+- **PR #110280** Thanks @RomneyDa.
+- **PR #112483** Thanks @joshavant.
+- **PR #112232**
+- **PR #112563**
+- **PR #112544**
+- **PR #112562**
+- **PR #112569** Thanks @RomneyDa.
+- **PR #112593** Related #100635. Thanks @HOYALIM and @aniruddhaadak80.
+- **PR #112570**
+- **PR #112574**
+- **PR #112571**
+- **PR #112241**
+- **PR #112601**
+- **PR #112587**
+- **PR #112568**
+- **PR #112599**
+- **PR #112554**
+- **PR #112565**
+- **PR #112255**
+- **PR #112597**
+- **PR #112542**
+- **PR #109786** Thanks @Leon-SK668.
+- **PR #112602**
+- **PR #112613**
+- **PR #112607** Related #112604. Thanks @joshavant.
+- **PR #112610**
+- **PR #112578**
+- **PR #112594**
+- **PR #112600**
+- **PR #112628**
+- **PR #112353** Related #112347.
+- **PR #112521**
+- **PR #112633**
+- **PR #112635**
+- **PR #110565** Related #108738. Thanks @joshavant and @colabiu.
+- **PR #112639**
+- **PR #112401** Related #112399.
+- **PR #112646**
+- **PR #112629**
+- **PR #112420**
+- **PR #112442** Related #112425.
+- **PR #112658**
+- **PR #112632**
+- **PR #112663**
+- **PR #112245** Thanks @IWhatsskill and @Solvely-Colin.
+- **PR #102306** Thanks @giodl73-repo and @Patrick-Erichsen.
+- **PR #112286**
+- **PR #112396**
+- **PR #112676**
+- **PR #112559** Thanks @pgondhi987.
+- **PR #112560** Thanks @pgondhi987.
+- **PR #95824** Thanks @ats3v and @jacobtomlinson.
+- **PR #102383** Thanks @giodl73-repo and @Patrick-Erichsen.
+- **PR #112530** Thanks @sallyom.
+- **PR #102406** Thanks @giodl73-repo and @Patrick-Erichsen.
+- **PR #112671**
+- **PR #112651**
+- **PR #112662**
+- **PR #112649**
+- **PR #112673**
+- **PR #112692**
+- **PR #112699**
+- **PR #112715**
+- **PR #98245** Thanks @yetval.
+- **PR #102427** Thanks @giodl73-repo and @Patrick-Erichsen.
+- **PR #112704**
+- **PR #112567**
 ## 2026.7.1
 
 OpenClaw v2026.7.1 brings major Control UI and onboarding overhauls, major updates to the official iOS, Android, and macOS apps, expanded model and provider support including GPT-5.6 compatibility, Tencent Hy3, and Meta Muse Spark 1.1, and stronger Codex and connected coding-agent workflows. Telegram, Slack, Discord, and Apple Messages each receive substantial updates, while Gateway crash loops, scheduled work, remote browser control, workspace terminals, sessions, and goals also improve. There are also many general fixes and refinements throughout OpenClaw.

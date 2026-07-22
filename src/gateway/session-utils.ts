@@ -2226,6 +2226,7 @@ export function buildGatewaySessionRow(params: {
   return {
     key,
     createdBy: entry?.createdBy,
+    visibility: entry ? (entry.visibility ?? "shared") : undefined,
     spawnedBy: subagentOwner || entry?.spawnedBy,
     swarmGroupId: entry?.swarmGroupId,
     spawnedWorkspaceDir: entry?.spawnedWorkspaceDir,

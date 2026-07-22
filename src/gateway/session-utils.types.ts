@@ -1,9 +1,15 @@
 // Shared Gateway session projection types.
 // Keeps server methods and Control UI payloads aligned.
 import type { FastMode } from "@openclaw/normalization-core/string-coerce";
-import type { SessionPlacement } from "../../packages/gateway-protocol/src/index.js";
-import type { SessionCreatorIdentity } from "../../packages/gateway-protocol/src/schema/sessions.js";
-import type { SessionObserverDigest } from "../../packages/gateway-protocol/src/schema/sessions.js";
+import type {
+  SessionPlacement,
+  SessionSharingRole,
+  SessionVisibility,
+} from "../../packages/gateway-protocol/src/index.js";
+import type {
+  SessionCreatorIdentity,
+  SessionObserverDigest,
+} from "../../packages/gateway-protocol/src/schema/sessions.js";
 import type { QueueMode } from "../auto-reply/reply/queue/types.js";
 import type { ChatType } from "../channels/chat-type.js";
 import type {
@@ -47,6 +53,10 @@ type SessionCompactionCheckpointPreview = Pick<
 export type GatewaySessionRow = {
   key: string;
   createdBy?: SessionCreatorIdentity;
+  /** Additive collaboration state; absent on older gateways. */
+  visibility?: SessionVisibility;
+  /** Caller-relative role used by Control UI participation controls. */
+  sharingRole?: SessionSharingRole;
   spawnedBy?: string;
   /** Collector swarm group that owns this child session, when applicable. */
   swarmGroupId?: string;

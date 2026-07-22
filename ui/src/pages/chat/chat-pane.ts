@@ -520,6 +520,11 @@ class ChatPane extends OpenClawLightDomElement {
     if (current?.loading && !force) {
       return;
     }
+    // Sharing data (membership + paired identities) is connection-scoped. A
+    // gateway/account change bumps the generation and clears this cache, so a
+    // request that resolves after the switch must be dropped rather than
+    // overwrite the new connection's menu with the previous account's data.
+    const generation = this.connectionGeneration;
     this.setSessionSharingState(cacheKey, { ...current, loading: true, error: undefined });
     try {
       const result = await state.client.request<SessionMembersListResult>("session.members.list", {
@@ -528,8 +533,14 @@ class ChatPane extends OpenClawLightDomElement {
           ? { agentId: this.sessionSharingAgentId(row.key) }
           : {}),
       });
+      if (this.connectionGeneration !== generation) {
+        return;
+      }
       this.setSessionSharingState(cacheKey, { loading: false, result });
     } catch (error) {
+      if (this.connectionGeneration !== generation) {
+        return;
+      }
       this.setSessionSharingState(cacheKey, { loading: false, error: String(error) });
     }
   }
@@ -2727,6 +2738,10 @@ class ChatPane extends OpenClawLightDomElement {
       this.sessionDiscussionStates.clear();
       this.sessionDiscussionOpenUrls.clear();
       this.sessionParticipationTracker.reset();
+      // A new gateway/account owns its own membership + identity data; drop the
+      // previous connection's sharing cache so a stale loading entry cannot
+      // suppress the fresh load or leak the prior account's identities.
+      this.sessionSharingStates = new Map();
       this.resetSessionPullRequests();
       this.resetOlderMessagesViewport();
       state.chatLoading = false;

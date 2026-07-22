@@ -196,17 +196,15 @@ export async function runNonInteractiveLocalSetup(params: {
   if (opts.skipBootstrap) {
     nextConfig = applySkipBootstrapConfig(nextConfig);
   }
-  if ((nextConfig.agents?.list?.length ?? 0) === 0) {
-    const { ensureOnboardingAgent } = await import("../onboard-agent.js");
-    const created = await ensureOnboardingAgent({
-      config: nextConfig,
-      name: "main",
-      workspace: workspaceDir,
-    });
-    nextConfig = applyLocalSetupWorkspaceConfig(created.config, requestedWorkspaceDir);
-    if (opts.skipBootstrap) {
-      nextConfig = applySkipBootstrapConfig(nextConfig);
-    }
+  const { ensureOnboardingAgent } = await import("../onboard-agent.js");
+  const created = await ensureOnboardingAgent({
+    config: nextConfig,
+    workspace: workspaceDir,
+    baseConfig,
+  });
+  nextConfig = applyLocalSetupWorkspaceConfig(created.config, requestedWorkspaceDir);
+  if (opts.skipBootstrap) {
+    nextConfig = applySkipBootstrapConfig(nextConfig);
   }
 
   const inferredAuthChoice = opts.authChoice

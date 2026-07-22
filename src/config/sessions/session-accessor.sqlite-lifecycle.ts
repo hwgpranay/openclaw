@@ -1,5 +1,6 @@
 import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
 import { executeSqliteQuerySync, getNodeSqliteKysely } from "../../infra/kysely-sync.js";
+import { parseAgentSessionKey } from "../../routing/session-key.js";
 import {
   isAgentHarnessSessionKey,
   isValidAgentHarnessSessionStoreEntry,
@@ -145,7 +146,8 @@ export async function cleanupSqliteSessionLifecycleArtifacts(
 export async function resetSqliteSessionEntryLifecycle(
   params: ResetSessionEntryLifecycleParams,
 ): Promise<ResetSessionEntryLifecycleResult> {
-  const resolved = resolveSqliteStoreScope(params.storePath, { agentId: params.agentId });
+  const agentId = params.agentId ?? parseAgentSessionKey(params.target.canonicalKey)?.agentId;
+  const resolved = resolveSqliteStoreScope(params.storePath, { agentId });
   // Retained reset history is the store's growth event; give the throttled
   // budget pass a chance to extract-and-evict once we finish.
   try {
@@ -215,7 +217,8 @@ async function deleteSqliteSessionEntryLifecycleInternal(
   allowLockedEntryRemoval: boolean,
   expectedPluginOwnerId?: string,
 ): Promise<DeleteSessionEntryLifecycleResult> {
-  const resolved = resolveSqliteStoreScope(params.storePath, { agentId: params.agentId });
+  const agentId = params.agentId ?? parseAgentSessionKey(params.target.canonicalKey)?.agentId;
+  const resolved = resolveSqliteStoreScope(params.storePath, { agentId });
   try {
     return await deleteSqliteSessionEntryLifecycleLocked(
       resolved,

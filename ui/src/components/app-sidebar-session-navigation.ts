@@ -169,6 +169,7 @@ export abstract class AppSidebarSessionNavigationElement extends AppSidebarSessi
         kind: row.kind,
         pinned: row.pinned === true,
         archived: row.archived === true,
+        visibility: row.visibility,
         icon: row.icon,
         category: normalizeOptionalString(row.category),
         channel: channelInfo.channel,

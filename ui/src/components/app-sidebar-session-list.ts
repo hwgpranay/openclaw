@@ -91,6 +91,7 @@ export abstract class AppSidebarSessionListElement extends AppSidebarSessionNarr
       this.selectedSessionKeys.has(session.key) ? "sidebar-recent-session--selected" : "",
       session.pinned ? "session-row-host--pinned" : "",
       running ? "session-row-host--running" : "",
+      session.visibility === "draft" ? "session-row-host--draft" : "",
       session.attention.kind === "error"
         ? "sidebar-recent-session--attention-danger"
         : session.attention.kind !== "none"
@@ -130,6 +131,11 @@ export abstract class AppSidebarSessionListElement extends AppSidebarSessionNarr
         @mouseenter=${(event: MouseEvent) => startHoverMarquee(event.currentTarget as HTMLElement)}
         @mouseleave=${(event: MouseEvent) => stopHoverMarquee(event.currentTarget as HTMLElement)}
       >
+        ${session.visibility === "draft"
+          ? html`<span class="session-row-draft-indicator" title=${t("chat.sessionSharing.draft")}
+              >👻</span
+            >`
+          : nothing}
         <a
           href=${session.href}
           class="sidebar-recent-session__link"

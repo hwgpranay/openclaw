@@ -265,10 +265,6 @@ async function runSetupWizardOnce(
       },
       continueOnboarding: true,
     });
-    if (migrationOutcome.kind === "resumed-promotion") {
-      await migrationOutcome.acknowledgePromotion?.();
-      return;
-    }
     acknowledgeMigrationPromotion = migrationOutcome.acknowledgePromotion;
     const migratedSnapshot = await readSetupConfigFileSnapshot();
     if (!migratedSnapshot.valid) {

@@ -257,7 +257,7 @@ export async function finishUpdate(params: {
           restoredAuthoredChannels: restoredConfig.authoredChannels,
           opts: params.opts,
           timeoutMs: params.updateStepTimeoutMs,
-          pluginInstallRecords: await loadInstalledPluginIndexInstallRecords(),
+          pluginInstallRecords: params.preUpdatePluginInstallRecords,
         });
       } finally {
         if (compatibilityDowngradeTarget) {

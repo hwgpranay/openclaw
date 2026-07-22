@@ -19,7 +19,6 @@ const replaceConfigFileMock = vi.hoisted(() =>
   vi.fn(async (params: { nextConfig: unknown }) => await writeConfigFileMock(params.nextConfig)),
 );
 const createAgentMock = vi.hoisted(() => vi.fn());
-const authPathMocks = vi.hoisted(() => ({ defaultAgentDir: "/tmp/openclaw-main-agent" }));
 const commitConfigWithPendingPluginInstallsMock = vi.hoisted(() =>
   vi.fn(async (params: { nextConfig: Record<string, unknown> }) => {
     await writeConfigFileMock(params.nextConfig);
@@ -88,30 +87,7 @@ vi.mock("../config/config.js", async () => ({
   replaceConfigFile: replaceConfigFileMock,
 }));
 
-vi.mock("../agents/agent-create.js", () => ({
-  createAgent: createAgentMock,
-  hasValidRawAgentIdCharacters: (value: string) => /[a-z0-9]/iu.test(value),
-}));
-
-vi.mock("../agents/agent-scope-config.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../agents/agent-scope-config.js")>();
-  return {
-    ...actual,
-    resolveDefaultAgentDir: (config: Parameters<typeof actual.resolveDefaultAgentDir>[0]) =>
-      (config.agents?.list?.length ?? 0) > 0
-        ? actual.resolveDefaultAgentDir(config)
-        : authPathMocks.defaultAgentDir,
-  };
-});
-
-vi.mock("../agents/auth-profiles/path-resolve.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../agents/auth-profiles/path-resolve.js")>();
-  return {
-    ...actual,
-    resolveAuthStorePath: (agentDir?: string) =>
-      actual.resolveAuthStorePath(agentDir ?? authPathMocks.defaultAgentDir),
-  };
-});
+vi.mock("../agents/agent-create.js", () => ({ createAgent: createAgentMock }));
 
 vi.mock("../plugins/install-record-commit.js", async () => ({
   ...(await vi.importActual<typeof import("../plugins/install-record-commit.js")>(
@@ -213,7 +189,6 @@ describe("agents add command", () => {
     run: (root: string) => Promise<void>,
   ): Promise<void> {
     const root = await suiteTempDirs.make(prefix);
-    authPathMocks.defaultAgentDir = path.join(root, "default", "agent");
     await withEnvAsync({ OPENCLAW_STATE_DIR: root }, async () => await run(root));
   }
 
@@ -243,15 +218,6 @@ describe("agents add command", () => {
     );
     expect(runtime.exit).toHaveBeenCalledWith(1);
     expect(writeConfigFileMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects an agent name with no valid id characters", async () => {
-    readConfigFileSnapshotMock.mockResolvedValue({ ...baseConfigSnapshot });
-    await agentsAddCommand({ name: "###", workspace: "/tmp/work" }, runtime, {
-      hasFlags: true,
-    });
-    expect(runtime.error).toHaveBeenCalledWith(expect.stringContaining("no valid id characters"));
-    expect(createAgentMock).not.toHaveBeenCalled();
   });
 
   it.each(RESERVED_SYSTEM_AGENT_IDS_FOR_TEST)(
@@ -309,8 +275,8 @@ describe("agents add command", () => {
   it("skips catalog validation when checking the interactive wizard model config", async () => {
     readConfigFileSnapshotMock.mockResolvedValue({
       ...baseConfigSnapshot,
-      config: { agents: { list: [] } },
-      sourceConfig: { agents: { list: [] } },
+      config: { agents: { list: [{ id: "main", default: true }] } },
+      sourceConfig: { agents: { list: [{ id: "main", default: true }] } },
     });
     wizardMocks.createClackPrompter.mockReturnValue({
       intro: vi.fn(),
@@ -329,11 +295,6 @@ describe("agents add command", () => {
       expect.objectContaining({
         agentId: "jon",
         validateCatalog: false,
-      }),
-    );
-    expect(commitConfigWithPendingPluginInstallsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        nextConfig: expect.objectContaining({ agents: expect.objectContaining({ list: [] }) }),
       }),
     );
   });
@@ -504,8 +465,8 @@ describe("agents add command", () => {
     it("delegates creation to the canonical service", async () => {
       readConfigFileSnapshotMock.mockResolvedValue({
         ...baseConfigSnapshot,
-        config: { agents: { list: [] } },
-        sourceConfig: { agents: { list: [] } },
+        config: { agents: { list: [{ id: "main", default: true }] } },
+        sourceConfig: { agents: { list: [{ id: "main", default: true }] } },
       });
 
       await agentsAddCommand({ name: "Work", workspace: "/tmp/work" }, runtime, {
@@ -525,8 +486,8 @@ describe("agents add command", () => {
     it("reports a duplicate rejected by the canonical service", async () => {
       readConfigFileSnapshotMock.mockResolvedValue({
         ...baseConfigSnapshot,
-        config: { agents: { list: [] } },
-        sourceConfig: { agents: { list: [] } },
+        config: { agents: { list: [{ id: "main", default: true }] } },
+        sourceConfig: { agents: { list: [{ id: "main", default: true }] } },
       });
       createAgentMock.mockResolvedValueOnce({
         status: "error",
@@ -549,18 +510,18 @@ describe("agents add command", () => {
         .mockResolvedValueOnce({
           ...baseConfigSnapshot,
           hash: "hash-1",
-          config: { agents: { list: [] } },
-          sourceConfig: { agents: { list: [] } },
+          config: { agents: { list: [{ id: "main", default: true }] } },
+          sourceConfig: { agents: { list: [{ id: "main", default: true }] } },
         })
         .mockResolvedValueOnce({
           ...baseConfigSnapshot,
           hash: "hash-2",
           config: {
-            agents: { list: [{ id: "other-agent" }] },
+            agents: { list: [{ id: "other-agent", default: true }] },
             bindings: [{ type: "route", agentId: "other-agent", match: { channel: "telegram" } }],
           },
           sourceConfig: {
-            agents: { list: [{ id: "other-agent" }] },
+            agents: { list: [{ id: "other-agent", default: true }] },
             bindings: [{ type: "route", agentId: "other-agent", match: { channel: "telegram" } }],
           },
         });

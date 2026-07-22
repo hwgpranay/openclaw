@@ -3,6 +3,7 @@ import { Type } from "typebox";
 import { closedObject } from "./closed-object.js";
 import { PluginJsonValueSchema } from "./plugins.js";
 import { NonEmptyString } from "./primitives.js";
+import { SessionSharingRoleSchema, SessionVisibilitySchema } from "./sessions-sharing.js";
 import { SessionCreatorIdentitySchema } from "./sessions.js";
 
 const SessionCatalogErrorSchema = closedObject({ code: NonEmptyString, message: NonEmptyString });
@@ -57,6 +58,8 @@ export const SessionCatalogSessionSchema = closedObject({
   archived: Type.Boolean(),
   sessionKey: Type.Optional(NonEmptyString),
   createdBy: Type.Optional(SessionCreatorIdentitySchema),
+  visibility: Type.Optional(SessionVisibilitySchema),
+  sharingRole: Type.Optional(SessionSharingRoleSchema),
   canContinue: Type.Boolean(),
   canArchive: Type.Boolean(),
   canOpenTerminal: Type.Optional(Type.Boolean()),

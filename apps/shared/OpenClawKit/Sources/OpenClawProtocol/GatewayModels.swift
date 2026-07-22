@@ -4137,6 +4137,8 @@ public struct SessionCatalogSession: Codable, Sendable {
     public let archived: Bool
     public let sessionkey: String?
     public let createdby: SessionSharingIdentity?
+    public let visibility: SessionVisibility?
+    public let sharingrole: SessionSharingRole?
     public let cancontinue: Bool
     public let canarchive: Bool
     public let canopenterminal: Bool?
@@ -4158,6 +4160,8 @@ public struct SessionCatalogSession: Codable, Sendable {
         archived: Bool,
         sessionkey: String? = nil,
         createdby: SessionSharingIdentity? = nil,
+        visibility: SessionVisibility? = nil,
+        sharingrole: SessionSharingRole? = nil,
         cancontinue: Bool,
         canarchive: Bool,
         canopenterminal: Bool? = nil)
@@ -4178,6 +4182,8 @@ public struct SessionCatalogSession: Codable, Sendable {
         self.archived = archived
         self.sessionkey = sessionkey
         self.createdby = createdby
+        self.visibility = visibility
+        self.sharingrole = sharingrole
         self.cancontinue = cancontinue
         self.canarchive = canarchive
         self.canopenterminal = canopenterminal
@@ -4200,6 +4206,8 @@ public struct SessionCatalogSession: Codable, Sendable {
         case archived
         case sessionkey = "sessionKey"
         case createdby = "createdBy"
+        case visibility
+        case sharingrole = "sharingRole"
         case cancontinue = "canContinue"
         case canarchive = "canArchive"
         case canopenterminal = "canOpenTerminal"

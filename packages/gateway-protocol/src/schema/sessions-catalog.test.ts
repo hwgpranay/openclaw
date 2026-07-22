@@ -32,6 +32,8 @@ describe("SessionsCatalogListResultSchema", () => {
                     status: "idle",
                     archived: false,
                     createdBy: { id: "profile-ada", label: "Ada" },
+                    visibility: "read-only",
+                    sharingRole: "member",
                     canContinue: true,
                     canArchive: false,
                     canOpenTerminal: true,
@@ -43,6 +45,44 @@ describe("SessionsCatalogListResultSchema", () => {
         ],
       }),
     ).toBe(true);
+  });
+
+  it("round-trips optional sharing fields on session rows", () => {
+    const result = {
+      catalogs: [
+        {
+          id: "openclaw",
+          label: "OpenClaw",
+          capabilities: { continueSession: true, archive: true },
+          hosts: [
+            {
+              hostId: "gateway:local",
+              label: "Gateway",
+              kind: "gateway",
+              connected: true,
+              sessions: [
+                {
+                  threadId: "thread-shared",
+                  status: "idle",
+                  archived: false,
+                  visibility: "suggest",
+                  sharingRole: "owner",
+                  canContinue: true,
+                  canArchive: true,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const roundTripped = JSON.parse(JSON.stringify(result)) as typeof result;
+
+    expect(Value.Check(SessionsCatalogListResultSchema, roundTripped)).toBe(true);
+    expect(roundTripped.catalogs[0]?.hosts[0]?.sessions[0]).toMatchObject({
+      visibility: "suggest",
+      sharingRole: "owner",
+    });
   });
 });
 

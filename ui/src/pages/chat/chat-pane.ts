@@ -158,7 +158,7 @@ import {
   applySelectedSessionProjection,
   dismissChatError,
   resolveAssistantAttachmentAuthToken,
-  resolveSessionParticipationBlocked,
+  SessionParticipationTracker,
 } from "./chat-pane-state.ts";
 import { markQueuedChatSendsWaitingForReconnect } from "./chat-queue.ts";
 import { dismissRealtimeTalkError } from "./chat-realtime.ts";
@@ -451,6 +451,7 @@ class ChatPane extends OpenClawLightDomElement {
   @litState() private headerPlatform: string | null = null;
   @litState() private headerCopiedAction: ChatPaneHeaderAction | null = null;
   @litState() private sessionSharingStates = new Map<string, ChatSessionSharingState>();
+  private readonly sessionParticipationTracker = new SessionParticipationTracker();
   @litState() private boardCommandDock: {
     sessionKey: string;
     tabId: string;
@@ -2725,6 +2726,7 @@ class ChatPane extends OpenClawLightDomElement {
       this.taskSuggestionOperations.clear();
       this.sessionDiscussionStates.clear();
       this.sessionDiscussionOpenUrls.clear();
+      this.sessionParticipationTracker.reset();
       this.resetSessionPullRequests();
       this.resetOlderMessagesViewport();
       state.chatLoading = false;
@@ -3448,8 +3450,11 @@ class ChatPane extends OpenClawLightDomElement {
       state.sessionsResult?.sessions.some(
         (row) => row.archived === true && areUiSessionKeysEquivalent(row.key, state.sessionKey),
       ) === true;
-    const sessionParticipationBlocked = resolveSessionParticipationBlocked({
+    const sessionParticipationBlocked = this.sessionParticipationTracker.resolve({
       catalog: catalogKey !== null,
+      listLoaded: state.sessionsResult !== null,
+      listLoading: state.sessionsLoading,
+      sessionKey: `${currentAgentId ?? ""}\0${state.sessionKey}`,
       session: selectedSession,
     });
     const disabledReason = sessionParticipationBlocked

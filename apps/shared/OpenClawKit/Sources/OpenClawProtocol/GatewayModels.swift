@@ -4136,7 +4136,7 @@ public struct SessionCatalogSession: Codable, Sendable {
     public let pullrequest: SessionCatalogPullRequestSummary?
     public let archived: Bool
     public let sessionkey: String?
-    public let createdby: [String: AnyCodable]?
+    public let createdby: SessionSharingIdentity?
     public let cancontinue: Bool
     public let canarchive: Bool
     public let canopenterminal: Bool?
@@ -4157,7 +4157,7 @@ public struct SessionCatalogSession: Codable, Sendable {
         pullrequest: SessionCatalogPullRequestSummary? = nil,
         archived: Bool,
         sessionkey: String? = nil,
-        createdby: [String: AnyCodable]? = nil,
+        createdby: SessionSharingIdentity? = nil,
         cancontinue: Bool,
         canarchive: Bool,
         canopenterminal: Bool? = nil)

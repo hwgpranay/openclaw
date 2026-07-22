@@ -6,8 +6,6 @@ import {
   canReceiveSessionEvent,
   canMutateSession,
   filterDraftSessionsForClient,
-  resolveGatewayConnectionIdentity,
-  resolveSessionCreator,
   resolveSessionMutationTarget,
   resolveSessionSharingRole,
   resolveSessionVisibility,
@@ -45,7 +43,11 @@ function client(params: {
           }
         : {}),
     },
-    ...(params.user ? { authenticatedUserId: params.user } : {}),
+    ...(params.user
+      ? { authenticatedUserId: params.user, operatorIdentity: { id: params.user } }
+      : params.deviceId && params.displayName
+        ? { operatorIdentity: { id: params.deviceId, label: params.displayName } }
+        : {}),
   };
 }
 
@@ -70,20 +72,32 @@ describe("session sharing policy", () => {
     expect(canMutateSession({ role, visibility: "draft" })).toBe(true);
   });
 
-  it("uses trusted-proxy identity before the paired-device label fallback", () => {
+  it("uses only the trusted operator identity prepared during connection admission", () => {
     expect(
-      resolveGatewayConnectionIdentity(
-        client({ user: "alice@example.com", deviceId: "device-1", displayName: "Alice's Mac" }),
-      ),
-    ).toEqual({ id: "alice@example.com" });
+      resolveSessionSharingRole({
+        client: client({ user: "alice@example.com" }),
+        target: target({ id: "alice@example.com", label: "Alice" }),
+      }),
+    ).toBe("owner");
+
+    const rawHandshakeOnly = client({});
+    rawHandshakeOnly.authenticatedUserId = "viewer@example.com";
+    rawHandshakeOnly.connect.device = {
+      id: "viewer-device",
+      publicKey: "key",
+      signature: "signature",
+      signedAt: 1,
+      nonce: "nonce",
+    };
     expect(
-      resolveGatewayConnectionIdentity(
-        client({ deviceId: "device-1", displayName: "Alice's Mac" }),
-      ),
-    ).toEqual({ id: "device-1", label: "Alice's Mac" });
+      resolveSessionSharingRole({
+        client: rawHandshakeOnly,
+        target: target({ id: "owner@example.com", label: "Owner" }),
+      }),
+    ).toBe("owner");
   });
 
-  it("reads W1 createdBy structurally and hides drafts from other identified operators", () => {
+  it("uses the landed createdBy contract and hides drafts from other identified operators", () => {
     const owner = client({ user: "owner@example.com" });
     const viewer = client({ user: "viewer@example.com" });
     const entry = {
@@ -92,7 +106,6 @@ describe("session sharing policy", () => {
       visibility: "draft" as const,
       createdBy: { id: "owner@example.com", label: "Owner" },
     };
-    expect(resolveSessionCreator(entry)).toEqual({ id: "owner@example.com", label: "Owner" });
     expect(filterDraftSessionsForClient({ client: owner, store: { main: entry } })).toHaveProperty(
       "main",
     );

@@ -136,7 +136,7 @@ describe("session sharing handlers", () => {
       expect(
         authorizeSessionMutation({
           cfg: {},
-          client: { ...soloClient(), authenticatedUserId: "viewer" },
+          client: { ...soloClient(), operatorIdentity: { id: "viewer" } },
           method: "sessions.groups.delete",
           requestParams: { name: "Projects" },
           context: requestContext,
@@ -145,7 +145,7 @@ describe("session sharing handlers", () => {
       expect(
         await call("session.members.list", { sessionKey: restrictedKey }, requestContext, {
           ...soloClient(),
-          authenticatedUserId: "viewer",
+          operatorIdentity: { id: "viewer" },
         }),
       ).toEqual([
         [
@@ -161,7 +161,7 @@ describe("session sharing handlers", () => {
       invalidateSessionSharingSnapshot();
       const viewerClient = {
         ...soloClient(),
-        authenticatedUserId: "viewer",
+        operatorIdentity: { id: "viewer" },
       } as never;
       expect(
         canReceiveSessionEvent({

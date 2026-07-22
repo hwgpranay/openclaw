@@ -128,8 +128,11 @@ export async function runSetupModelAuthStep(params: {
   prompter: WizardPrompter;
   runtime: RuntimeEnv;
   workspaceDir: string;
+  agentDir?: string;
+  stateDir?: string;
 }): Promise<SetupModelAuthCandidate> {
   const { opts, prompter, runtime, workspaceDir } = params;
+  const env = params.stateDir ? { ...process.env, OPENCLAW_STATE_DIR: params.stateDir } : undefined;
   let nextConfig = params.stagedCandidate?.config ?? params.config;
   let replacementBaseConfig = params.config;
   let authProfiles: PreparedAuthChoiceResult["authProfiles"] =
@@ -150,8 +153,9 @@ export async function runSetupModelAuthStep(params: {
     const authChoicePromptModule = await import("../commands/auth-choice-prompt.js");
     promptAuthChoiceGrouped = authChoicePromptModule.promptAuthChoiceGrouped;
     keepCurrentAuthChoice = authChoicePromptModule.KEEP_CURRENT_AUTH_CHOICE;
-    authStore = ensureAuthProfileStore(undefined, {
+    authStore = ensureAuthProfileStore(params.agentDir, {
       allowKeychainPrompt: false,
+      readOnly: true,
     });
   }
   while (true) {
@@ -231,6 +235,8 @@ export async function runSetupModelAuthStep(params: {
         runtime,
         setDefaultModel: true,
         preserveExistingDefaultModel: true,
+        agentDir: params.agentDir,
+        env,
         opts: {
           ...opts,
           token: opts.authChoice === "apiKey" && opts.token ? opts.token : undefined,

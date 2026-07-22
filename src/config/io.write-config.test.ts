@@ -1091,8 +1091,14 @@ describe("config io write", () => {
       expect(snapshot.valid).toBe(false);
       expect(snapshot.raw).toBe(originalRaw);
       expect(snapshot.parsed).toEqual(original);
-      expect(snapshot.sourceConfig).toEqual(original);
-      expect(snapshot.config).toEqual(original);
+      expect(snapshot.sourceConfig).toEqual({
+        ...original,
+        agents: { entries: { main: { default: true } } },
+      });
+      expect(snapshot.config).toEqual({
+        ...original,
+        agents: { entries: { main: { default: true } } },
+      });
       expect(snapshot.issues[0]?.message).toContain("unknown channel id: test-plugin-channel");
     });
   });
@@ -1862,7 +1868,11 @@ describe("config io write", () => {
       expect(snapshot.valid).toBe(false);
 
       await io.writeConfigFile({
-        agents: { entries: { main: { workspace: "/resolved/agent-workspace" } } },
+        agents: {
+          entries: {
+            main: { default: true, workspace: "/resolved/agent-workspace" },
+          },
+        },
       });
 
       await expect(fs.readFile(configPath, "utf-8")).resolves.not.toBe(originalRootRaw);
@@ -2096,6 +2106,7 @@ describe("config io write", () => {
               defaults: {
                 model: { primary: "openrouter/anthropic/claude-sonnet-4.6" },
               },
+              entries: { main: { default: true } },
             });
           },
         );

@@ -181,6 +181,7 @@ export async function finishUpdate(params: {
   const postUpdateRoot = params.result.root ?? params.root;
 
   let postCorePluginUpdate;
+  let postUpdateConfigSnapshot: Awaited<ReturnType<typeof readConfigFileSnapshot>> | undefined;
   let pluginsUpdatedInFreshProcess = false;
   if (shouldResumePostCoreInFreshProcess) {
     const freshProcessResult = await continuePostCoreUpdateInFreshProcess({
@@ -213,7 +214,7 @@ export async function finishUpdate(params: {
 
   if (!pluginsUpdatedInFreshProcess) {
     await withPluginLifecycleLease({}, async () => {
-      let postUpdateConfigSnapshot = await readConfigFileSnapshot({
+      postUpdateConfigSnapshot = await readConfigFileSnapshot({
         skipPluginValidation: true,
         suppressFutureVersionWarning: shouldResumePostCoreInFreshProcess,
       });
@@ -300,12 +301,18 @@ export async function finishUpdate(params: {
     return;
   }
 
+  const restartConfigSnapshot =
+    postUpdateConfigSnapshot ??
+    (await readConfigFileSnapshot({
+      skipPluginValidation: true,
+      suppressFutureVersionWarning: shouldResumePostCoreInFreshProcess,
+    }));
   let restartScriptPath: string | null = null;
   let refreshGatewayServiceEnv = false;
   let gatewayServiceEnv: NodeJS.ProcessEnv | undefined;
   let skipLegacyServiceRestart = false;
   let gatewayPort = resolveUpdatedGatewayRestartPort({
-    config: postUpdateConfigSnapshot.valid ? postUpdateConfigSnapshot.config : undefined,
+    config: restartConfigSnapshot.valid ? restartConfigSnapshot.config : undefined,
     processEnv: process.env,
   });
   if (params.shouldRestart) {
@@ -350,7 +357,7 @@ export async function finishUpdate(params: {
       ) {
         gatewayServiceEnv = serviceState.env;
         gatewayPort = resolveUpdatedGatewayRestartPort({
-          config: postUpdateConfigSnapshot.valid ? postUpdateConfigSnapshot.config : undefined,
+          config: restartConfigSnapshot.valid ? restartConfigSnapshot.config : undefined,
           processEnv: process.env,
           serviceEnv: gatewayServiceEnv,
         });
